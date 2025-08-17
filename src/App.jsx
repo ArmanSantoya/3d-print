@@ -11,7 +11,7 @@ export default function App() {
   });
 
   return (
-    <Router>
+    <Router basename="/3d-print">
       <Routes>
         <Route path="/" element={<MultiStepForm config={config} />} />
         <Route path="/settings" element={<Settings config={config} setConfig={setConfig} />} />
