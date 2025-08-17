@@ -3,6 +3,7 @@ import Step1TrayCount from './Step1TrayCount';
 import Step2TrayInputs from './Step2TrayInputs';
 import Step3Summary from './Step3Summary';
 
+
 export default function MultiStepForm({ config }) {
   const [step, setStep] = useState(1);
   const [trayCount, setTrayCount] = useState(0);
@@ -19,7 +20,7 @@ export default function MultiStepForm({ config }) {
 
   return (
     <div className="container">
-      <img src="/logo.jpg" alt="Logo" style={{ height: '100px', marginBottom: '1rem' }} />
+      <img src="/3d-print/logo.jpg" alt="Logo" style={{ height: '100px', marginBottom: '1rem' }} />
 
       <div className="step-wrapper">
         <div className={`step-container ${step === 1 ? (exiting ? 'exiting' : 'active') : ''}`}>
