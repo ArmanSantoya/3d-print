@@ -1,26 +1,33 @@
 import { useState } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import logoPath from '/logo.jpg';
 
-export default function Step3Summary({ trayData, config, prevStep }) {
+export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
   // Redondea hacia arriba al múltiplo de 500 más cercano
   const roundUpTo500 = (value) => Math.ceil(value / 500) * 500;
-  
 
   const calculateTrayCost = (tray) => {
-    const pricePerGram = config.materials[tray.material] / 1000;
-    const materialCost = tray.weight * pricePerGram;
-    const electricityCost = tray.time * config.electricity.kwh * config.electricity.price;
-    const maintenance = materialCost * tray.time * 0.1;
-    const total = materialCost + electricityCost + maintenance + config.labor;
-    return total * (1 + config.margin / 100);
+    const weight = Number(tray.weight) || 0;
+    const time = Number(tray.time) || 0;
+    const materialKey = tray.material;
+    const materialPricePerKg = (config.materials && config.materials[materialKey]) || 0;
+    const pricePerGram = materialPricePerKg / 1000;
+    const materialCost = weight * pricePerGram;
+    const electricityCost = time * ((config.electricity && config.electricity.kwh) || 0) * ((config.electricity && config.electricity.price) || 0);
+    const maintenance = materialCost * time * 0.1;
+    const total = materialCost + electricityCost + maintenance + (config.labor || 0);
+    return total * (1 + ((config.margin || 0) / 100));
   };
 
-  const totalWeight = trayData.reduce((sum, tray) => sum + parseFloat(tray.weight || 0), 0);
-  const totalTime = trayData.reduce((sum, tray) => sum + parseFloat(tray.time || 0), 0);
+  const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
+  const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
   const totalCost = trayData.reduce((sum, tray) => sum + calculateTrayCost(tray), 0);
   const totalRounded = roundUpTo500(totalCost);
 
-  // ------------------ NEW: PDF / Cotización ------------------
-  const [modalOpen, setModalOpen] = useState(false);
+   // ------------------ PDF / Cotización ------------------
+  // nota: reemplazado modal por panel inline (showOptions)
+  const [showOptions, setShowOptions] = useState(false);
   const [includesDesign, setIncludesDesign] = useState(false);
 
   const formatTimeHM = (timeHours) => {
@@ -29,48 +36,50 @@ export default function Step3Summary({ trayData, config, prevStep }) {
     return `${hrs}h ${mins}m`;
   };
 
-  const buildQuotationHtml = (includeDesign) => {
-    // Per-tray rounded costs
+  const buildQuotationHtmlFragment = (includeDesign) => {
     const rows = trayData.map((tray, i) => {
       const raw = calculateTrayCost(tray);
       const rounded = roundUpTo500(raw);
       return {
         index: i + 1,
-        weight: tray.weight || 0,
+        weight: Number(tray.weight) || 0,
         timeHM: formatTimeHM(tray.time),
-        material: tray.material,
+        material: tray.material || '',
         cost: rounded,
       };
     });
 
     const subtotal = rows.reduce((s, r) => s + r.cost, 0);
-    const designFee = includeDesign ? 5000 : 0;
+    const designFeeValue = Number(config.designFee ?? 5000);
+    const designFee = includeDesign ? designFeeValue : 0;
     const totalToCharge = subtotal + designFee;
 
     const rowsHtml = rows.map(r => `
       <tr>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.index}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:right;">${r.weight} g</td>
-        <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.timeHM}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.material}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:right;">$ ${r.cost.toLocaleString('es-CL')}</td>
       </tr>
     `).join('');
 
-    return `
-      <html>
-        <head>
-          <meta charset="utf-8"/>
-          <title>Cotización Arman3D</title>
-        </head>
-        <body style="font-family:Arial,Helvetica,sans-serif;color:#111;margin:20px;">
-          <h1>Cotización - Arman3D</h1>
+    return {
+      html: `
+        <div style="font-family:Arial,Helvetica,sans-serif;color:#111;padding:16px;width:800px;background:#fff;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="${logoPath}" alt="Arman3D" crossorigin="anonymous" style="height:72px;object-fit:contain;" />
+            <div>
+              <h1 style="margin:0 0 4px 0;font-size:20px;">Cotización</h1>
+              <div style="font-size:12px;color:#666;">Generado: ${new Date().toLocaleString()}</div>
+            </div>
+          </div>
+
           <table style="width:100%;border-collapse:collapse;margin-top:12px;">
             <thead>
               <tr style="background:#f5f5f5">
                 <th style="border:1px solid #ccc;padding:8px;">Bandeja</th>
                 <th style="border:1px solid #ccc;padding:8px;">Peso</th>
-                <th style="border:1px solid #ccc;padding:8px;">Tiempo</th>
+      
                 <th style="border:1px solid #ccc;padding:8px;">Material</th>
                 <th style="border:1px solid #ccc;padding:8px;">Costo (CLP)</th>
               </tr>
@@ -80,60 +89,75 @@ export default function Step3Summary({ trayData, config, prevStep }) {
             </tbody>
           </table>
 
-          <div style="margin-top:16px;font-size:1rem;">
-            <p><strong>Subtotal:</strong> $ ${subtotal.toLocaleString('es-CL')} CLP</p>
-            <p><strong>Incluye diseño:</strong> ${includeDesign ? 'Sí' : 'No'}</p>
-            <p><strong>Recargo por diseño:</strong> $ ${designFee.toLocaleString('es-CL')} CLP</p>
+          <div style="margin-top:12px;font-size:1rem;">
+            <p style="margin:4px 0;"><strong>Subtotal:</strong> $ ${subtotal.toLocaleString('es-CL')} CLP</p>
+            <p style="margin:4px 0;"><strong>Incluye diseño:</strong> ${includeDesign ? 'Sí' : 'No'}</p>
+            <p style="margin:4px 0;"><strong>Recargo por diseño:</strong> $ ${designFee.toLocaleString('es-CL')} CLP</p>
             <h2 style="margin-top:12px;">Total a cobrar: $ ${totalToCharge.toLocaleString('es-CL')} CLP</h2>
           </div>
-
-          <div style="margin-top:28px;font-size:0.9rem;color:#666;">
-            <p>Generado: ${new Date().toLocaleString()}</p>
-          </div>
-        </body>
-      </html>
-    `;
+        </div>
+      `,
+      subtotal,
+      designFee,
+      totalToCharge
+    };
   };
 
-  const generatePdf = (includeDesign) => {
-    const html = buildQuotationHtml(includeDesign);
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-    if (!printWindow) return alert('No se pudo abrir la ventana para imprimir. Revisa el bloqueador de ventanas emergentes.');
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    // Esperamos a que cargue para llamar a print
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      // no cerramos automáticamente; el usuario puede guardar como PDF
-    }, 500);
+  const generatePdf = async (includeDesign) => {
+    const { html } = buildQuotationHtmlFragment(includeDesign);
+
+    // crear contenedor temporal en DOM (visible para html2canvas)
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.background = '#fff';
+    wrapper.innerHTML = html;
+    document.body.appendChild(wrapper);
+
+    try {
+      const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const filename = `Cotizacion_Arman3D_${new Date().toISOString().slice(0,10)}.pdf`;
+      pdf.save(filename);
+    } catch (err) {
+      console.error(err);
+      alert('Ocurrió un error generando el PDF.');
+    } finally {
+      document.body.removeChild(wrapper);
+    }
   };
-  // ------------------ END NEW ------------------
+  // ------------------ END PDF ------------------
 
   return (
     <div>
       <h2>Paso 3: Resumen</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+
+      <table className="summary-table">
         <thead>
-          <tr style={{ backgroundColor: '#f1f1f1' }}>
-            <th style={{ border: '1px solid #ccc', padding: '0.5rem' }}>Bandeja</th>
-            <th style={{ border: '1px solid #ccc', padding: '0.5rem' }}>Peso (g)</th>
-            <th style={{ border: '1px solid #ccc', padding: '0.5rem' }}>tiempo (h)</th>
-            <th style={{ border: '1px solid #ccc', padding: '0.5rem' }}>Material</th>
-            <th style={{ border: '1px solid #ccc', padding: '0.5rem' }}>Costo (CLP)</th>
+          <tr>
+            <th>Bandeja</th>
+            <th>Peso (g)</th>
+            <th>tiempo (h)</th>
+            <th>Material</th>
+            <th>Costo (CLP)</th>
           </tr>
         </thead>
         <tbody>
           {trayData.map((tray, i) => (
             <tr key={i}>
-              <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{i + 1}</td>
-              <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{tray.weight}</td>
-              <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{tray.time}</td>
-              <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{tray.material}</td>
-              <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>
-                ${calculateTrayCost(tray).toLocaleString('es-CL')}
-              </td>
+              <td>{i + 1}</td>
+              <td>{tray.weight}</td>
+              <td>{tray.time}</td>
+              <td>{tray.material}</td>
+              <td>${calculateTrayCost(tray).toLocaleString('es-CL')}</td>
             </tr>
           ))}
         </tbody>
@@ -149,58 +173,45 @@ export default function Step3Summary({ trayData, config, prevStep }) {
       <div className="button-group" style={{ marginTop: '1rem' }}>
         <button className="btn-white" onClick={prevStep}>Volver</button>
         <button
-          className="btn-primary"
-          onClick={() => setModalOpen(true)}
+          className="btn-orange"
+          onClick={() => setShowOptions((s) => !s)}
           style={{ marginLeft: '0.5rem' }}
         >
           Generar cotización (PDF)
         </button>
       </div>
 
-      {/* Modal */}
-      {modalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000,
-          }}
-        >
-          <div style={{ background: '#fff', padding: 20, borderRadius: 8, width: 340 }}>
-            <h3 style={{ marginTop: 0 }}>Opciones de cotización</h3>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={includesDesign}
-                onChange={(e) => setIncludesDesign(e.target.checked)}
-              />
-              Incluye diseño (+ $5.000 CLP)
-            </label>
+      {/* Panel inline (antes modal) */}
+      <div className={`pdf-panel ${showOptions ? 'visible' : ''}`}>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-              <button
-                className="btn-white"
-                onClick={() => setModalOpen(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setModalOpen(false);
-                  generatePdf(includesDesign);
-                }}
-              >
-                Generar PDF
-              </button>
-            </div>
-          </div>
+        <label className="pdf-panel-option">
+          <input
+            type="checkbox"
+            className="checkbox-block"
+            checked={includesDesign}
+            onChange={(e) => setIncludesDesign(e.target.checked)}
+          />
+          <span>Incluye diseño (+ $5.000 CLP)</span>
+        </label>
+
+        <div className="pdf-panel-actions">
+          <button
+            className="btn-white"
+            onClick={() => setShowOptions(false)}
+          >
+            Cancelar
+          </button>
+          <button
+            className="btn-orange"
+            onClick={() => {
+              setShowOptions(false);
+              generatePdf(includesDesign);
+            }}
+          >
+            Descargar PDF
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

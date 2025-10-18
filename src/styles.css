@@ -325,3 +325,72 @@ button {
   margin: 0.4rem auto;
   max-width: 400px;
 }
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.summary-table thead tr {
+  background-color: #f1f1f1;
+}
+
+.summary-table th,
+.summary-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+}
+
+.summary-table td {
+  vertical-align: middle;
+}
+
+/* PDF options inline panel */
+.pdf-panel {
+  display: none;
+  margin-top: 12px;
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.pdf-panel.visible {
+  display: block;
+}
+
+.pdf-panel-title {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #202124;
+}
+
+.pdf-panel-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.pdf-panel-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ensure buttons spacing in panel */
+.pdf-panel .btn-white,
+.pdf-panel .btn-primary {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+.checkbox-block {
+  display: block;
+  margin: 0;
+  width: auto;
+}

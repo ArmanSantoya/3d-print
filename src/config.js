@@ -11,5 +11,6 @@ export const defaultConfig = {
   },
   labor: 2500,
   margin: 40,
-  maintenance: 0.1
+  maintenance: 0.1,
+  designFee: 5000
 };
