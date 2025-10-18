@@ -2,7 +2,8 @@ export const defaultConfig = {
   materials: {
     PLA: 18000,
     PETG: 20000,
-    ABS: 22000
+    ABS: 22000,
+    TPU: 26500
   },
   electricity: {
     kwh: 0.12,
