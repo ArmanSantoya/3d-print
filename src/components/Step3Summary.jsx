@@ -4,27 +4,53 @@ import html2canvas from 'html2canvas';
 import logoPath from '/logo.jpg';
 
 export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
-  // Redondea hacia arriba al múltiplo de 500 más cercano
-  const roundUpTo500 = (value) => Math.ceil(value / 500) * 500;
+  // Redondeo al múltiplo de 50 más cercano
+  const roundTo50 = (value) => Math.round((Number(value) || 0) / 50) * 50;
 
-  const calculateTrayCost = (tray) => {
-    const weight = Number(tray.weight) || 0;
-    const time = Number(tray.time) || 0;
-    const materialKey = tray.material;
-    const materialPricePerKg = (config.materials && config.materials[materialKey]) || 0;
-    const pricePerGram = materialPricePerKg / 1000;
-    const materialCost = weight * pricePerGram;
-    const electricityCost = time * ((config.electricity && config.electricity.kwh) || 0) * ((config.electricity && config.electricity.price) || 0);
-    const maintenance = materialCost * time * 0.1;
-    const total = materialCost + electricityCost + maintenance + (config.labor || 0);
-    return total * (1 + ((config.margin || 0) / 100));
+  // formatea tiempo total (horas decimales) a "Xd Yh Zm"
+  const formatTotalTime = (hoursDecimal) => {
+    let totalMinutes = Math.round((Number(hoursDecimal) || 0) * 60);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    totalMinutes -= days * 24 * 60;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes - hours * 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`); // mostrar 0m si todo es cero
+
+    return parts.join(' ');
   };
+
+const calculateTrayCost = (tray) => {
+  const weight = Number(tray.weight) || 0;
+  const time = Number(tray.time) || 0;
+  const materialKey = tray.material;
+
+  const materialPricePerKg = (config.materials && config.materials[materialKey]) || 0;
+  const pricePerGram = materialPricePerKg / 1000;
+  const materialCost = weight * pricePerGram;
+
+  const consumptionKw = (config.electricity.consumptionKw && config.electricity.consumptionKw[materialKey]) || 0;
+  const electricityCost = time * consumptionKw * config.electricity.price;
+
+  const maintenance = (materialCost + electricityCost) * config.maintenance;
+  const labor = Number(tray.labor) || 0;
+
+  const totalBase = materialCost + electricityCost + maintenance + labor;
+  const total = totalBase * (1 + ((config.margin || 0) / 100));
+
+  return roundTo50(total);
+};
+
+
 
   const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
   const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
   const totalCost = trayData.reduce((sum, tray) => sum + calculateTrayCost(tray), 0);
-  const totalRounded = roundUpTo500(totalCost);
-
+  const totalRounded = roundTo50(totalCost);
+  
    // ------------------ PDF / Cotización ------------------
   // nota: reemplazado modal por panel inline (showOptions)
   const [showOptions, setShowOptions] = useState(false);
@@ -39,7 +65,7 @@ export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
   const buildQuotationHtmlFragment = (includeDesign) => {
     const rows = trayData.map((tray, i) => {
       const raw = calculateTrayCost(tray);
-      const rounded = roundUpTo500(raw);
+      const rounded = roundTo50(raw);
       return {
         index: i + 1,
         weight: Number(tray.weight) || 0,
@@ -147,6 +173,7 @@ export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
             <th>Peso (g)</th>
             <th>tiempo (h)</th>
             <th>Material</th>
+            <th>Mano de obra (CLP)</th>
             <th>Costo (CLP)</th>
           </tr>
         </thead>
@@ -157,6 +184,7 @@ export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
               <td>{tray.weight}</td>
               <td>{tray.time}</td>
               <td>{tray.material}</td>
+              <td>{tray.labor ?? ''}</td>
               <td>${calculateTrayCost(tray).toLocaleString('es-CL')}</td>
             </tr>
           ))}
@@ -165,8 +193,7 @@ export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
 
       <div className="summary-box">
         <p><strong>Peso total:</strong> {totalWeight} g</p>
-        <p><strong>Tiempo total:</strong> {totalTime} h</p>
-        <p><strong>Total sin redondear:</strong> ${totalCost.toLocaleString('es-CL')} CLP</p>
+        <p><strong>Tiempo total:</strong> {formatTotalTime(totalTime)}</p>
         <p className="total">💰 Precio total: ${totalRounded.toLocaleString('es-CL')} CLP</p>
       </div>
 
