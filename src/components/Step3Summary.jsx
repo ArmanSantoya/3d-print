@@ -23,7 +23,7 @@ export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
     return parts.join(' ');
   };
 
-const calculateTrayCost = (tray) => {
+const calculateTrayDetails = (tray) => {
   const weight = Number(tray.weight) || 0;
   const time = Number(tray.time) || 0;
   const materialKey = tray.material;
@@ -36,19 +36,20 @@ const calculateTrayCost = (tray) => {
   const electricityCost = time * consumptionKw * config.electricity.price;
 
   const maintenance = (materialCost + electricityCost) * config.maintenance;
-  const labor = Number(tray.labor) || 0;
 
-  const totalBase = materialCost + electricityCost + maintenance + labor;
-  const total = totalBase * (1 + ((config.margin || 0) / 100));
+  const base = materialCost + electricityCost + maintenance;
+  const costPerHour = Math.max(1, Math.ceil(time)) * 1000;
+  const totalBeforeMargin = base + costPerHour;
+  const finalTotal = roundTo50(totalBeforeMargin * (1 + ((config.margin || 0) / 100)));
 
-  return roundTo50(total);
+  return { base, costPerHour, totalBeforeMargin, finalTotal };
 };
 
 
 
   const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
   const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
-  const totalCost = trayData.reduce((sum, tray) => sum + calculateTrayCost(tray), 0);
+  const totalCost = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray).finalTotal, 0);
   const totalRounded = roundTo50(totalCost);
   
    // ------------------ PDF / Cotización ------------------
@@ -64,7 +65,7 @@ const calculateTrayCost = (tray) => {
 
   const buildQuotationHtmlFragment = (includeDesign) => {
     const rows = trayData.map((tray, i) => {
-      const raw = calculateTrayCost(tray);
+      const raw = calculateTrayDetails(tray).finalTotal;
       const rounded = roundTo50(raw);
       return {
         index: i + 1,
@@ -173,21 +174,27 @@ const calculateTrayCost = (tray) => {
             <th>Peso (g)</th>
             <th>tiempo (h)</th>
             <th>Material</th>
-            <th>Mano de obra (CLP)</th>
-            <th>Costo (CLP)</th>
+            <th>Precio base (CLP)</th>
+            <th>Costo x hora (CLP)</th>
+            <th>Total (CLP)</th>
           </tr>
         </thead>
         <tbody>
-          {trayData.map((tray, i) => (
-            <tr key={i}>
-              <td>{i + 1}</td>
-              <td>{tray.weight}</td>
-              <td>{tray.time}</td>
-              <td>{tray.material}</td>
-              <td>{tray.labor ?? ''}</td>
-              <td>${calculateTrayCost(tray).toLocaleString('es-CL')}</td>
-            </tr>
-          ))}
+          {trayData.map((tray, i) => {
+            const { base, costPerHour, finalTotal } = calculateTrayDetails(tray);
+
+            return (
+              <tr key={i}>
+                <td>{i + 1}</td>
+                <td>{tray.weight}</td>
+                <td>{tray.time}</td>
+                <td>{tray.material}</td>
+                <td>${base.toLocaleString('es-CL')}</td>
+                <td>${costPerHour.toLocaleString('es-CL')}</td>
+                <td>${finalTotal.toLocaleString('es-CL')}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

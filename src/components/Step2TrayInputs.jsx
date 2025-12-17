@@ -29,8 +29,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
       time: '',
       material: 'PLA',
       hours: 0,
-      minutes: 0,
-      labor: ''
+      minutes: 0
     }));
     setTrayData(reset);
     setCurrentIndex(0);
@@ -77,13 +76,6 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
           <option key={mat} value={mat}>{mat}</option>
         ))}
       </select>
-
-      <label>Mano de obra (CLP):</label>
-      <input
-        type="number"
-        value={tray.labor ?? ''}
-        onChange={e => handleChange('labor', e.target.value, i)}
-      />
     </div>
   );
 
