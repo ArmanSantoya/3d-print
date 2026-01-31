@@ -5,17 +5,16 @@ export const defaultConfig = {
     ABS: 22000,
     TPU: 26500
   },
+
   electricity: {
-    price: 150,
-    // Consumo promedio real por material (kW)
-    consumptionKw: {
-      PLA: 0.105,
-      PETG: 0.14,
-      ABS: 0.14,
-      TPU: 0.14
-    }
+    consumptionKw: 0.35,   // Consumo real de la P1S ≈ 350W
+    pricePerKwh: 150       // CLP/kWh
   },
-  margin: 50,        // 50% de ganancia
-  maintenance: 0.1,  // 10% del costo de la pieza
-  designFee: 5000
+
+  machineCostPerHour: 1000, // CLP/h fijo por uso de máquina
+
+  margin: 30,              // % de ganancia sobre subtotal
+  iva: 0.19,               // 19% IVA
+  designFee: 5000          // CLP fijo por diseño
 };
+export default defaultConfig;

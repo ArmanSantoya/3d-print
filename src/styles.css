@@ -394,3 +394,15 @@ button {
   margin: 0;
   width: auto;
 }
+
+.project-info {
+  margin-bottom: '1rem'
+}
+
+.project-info label {
+    display: block;
+    margin: 0 auto;
+    max-width: 400px;
+    text-align: left;
+    font-weight: 700;
+}

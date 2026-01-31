@@ -13,18 +13,31 @@ export default function Settings({ config, setConfig }) {
     }));
   };
 
-  const handleElectricityChange = (key, value) => {
+  const handleConsumptionChange = (mat, value) => {
     setConfig(prev => ({
       ...prev,
       electricity: {
         ...prev.electricity,
-        [key]: parseFloat(value) || 0
+        consumptionKw: {
+          ...(prev.electricity?.consumptionKw || {}),
+          [mat]: parseFloat(value) || 0
+        }
+      }
+    }));
+  };
+
+  const handleElectricityPriceChange = (value) => {
+    setConfig(prev => ({
+      ...prev,
+      electricity: {
+        ...(prev.electricity || {}),
+        price: parseFloat(value) || 0
       }
     }));
   };
 
   const handleSimpleChange = (key, value) => {
-    setConfig(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
+    setConfig(prev => ({ ...prev, [key]: parseFloat(value) }));
   };
 
   const handleSave = () => {
@@ -36,7 +49,6 @@ export default function Settings({ config, setConfig }) {
     <div className="settings-container">
       <h2>Configuración</h2>
 
-      {/* Materiales */}
       <div className="settings-section">
         <h4>Materiales (CLP/kg)</h4>
         {Object.keys(config.materials || {}).map(mat => (
@@ -51,60 +63,52 @@ export default function Settings({ config, setConfig }) {
         ))}
       </div>
 
-      {/* Electricidad */}
       <div className="settings-section">
         <h4>Electricidad</h4>
-
-        <label>Consumo impresora (kW):</label>
-        <input
-          type="number"
-          step="0.01"
-          value={config.electricity?.consumptionKw ?? 0}
-          onChange={e => handleElectricityChange('consumptionKw', e.target.value)}
-        />
 
         <label>Precio por kWh (CLP):</label>
         <input
           type="number"
-          value={config.electricity?.pricePerKwh ?? 0}
-          onChange={e => handleElectricityChange('pricePerKwh', e.target.value)}
+          value={config.electricity?.price ?? 0}
+          onChange={e => handleElectricityPriceChange(e.target.value)}
         />
 
-        <label>Coste fijo máquina por hora (CLP/h):</label>
-        <input
-          type="number"
-          value={config.machineCostPerHour ?? 0}
-          onChange={e => handleSimpleChange('machineCostPerHour', e.target.value)}
-        />
+        <h5>Consumo por material (kW)</h5>
+        {(config.electricity?.consumptionKw ? Object.keys(config.electricity.consumptionKw) : Object.keys(config.materials || {})).map(mat => (
+          <div key={mat}>
+            <label>{mat}:</label>
+            <input
+              type="number"
+              step="0.001"
+              value={(config.electricity?.consumptionKw?.[mat]) ?? ''}
+              onChange={e => handleConsumptionChange(mat, e.target.value)}
+            />
+          </div>
+        ))}
       </div>
 
-      {/* Margen de ganancia */}
-      <div className="settings-section">
-        <h4>Margen de ganancia</h4>
-        <label>Porcentaje (%):</label>
-        <input
-          type="number"
-          value={config.margin ?? 0}
-          onChange={e => handleSimpleChange('margin', e.target.value)}
-        />
-      </div>
-
-      {/* Otros */}
       <div className="settings-section">
         <h4>Otros</h4>
+        <label>Margen de ganancia (%):</label>
+        <input
+          type="number"
+          value={config.margin}
+          onChange={e => handleSimpleChange('margin', e.target.value)}
+        />
+
+        <label>Mantenimiento (decimal, ej. 0.1 = 10%):</label>
+        <input
+          type="number"
+          step="0.01"
+          value={config.maintenance}
+          onChange={e => handleSimpleChange('maintenance', e.target.value)}
+        />
+
         <label>Coste diseño (CLP):</label>
         <input
           type="number"
           value={config.designFee ?? 0}
           onChange={e => handleSimpleChange('designFee', e.target.value)}
-        />
-
-        <label>IVA (decimal, ej. 0.19 = 19%):</label>
-        <input
-          type="number"
-          step="0.01"
-          value={config.iva ?? 0}
-          onChange={e => handleSimpleChange('iva', e.target.value)}
         />
       </div>
 

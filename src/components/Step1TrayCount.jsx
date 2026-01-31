@@ -1,12 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 
-export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, nextStep }) {
+export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, projectName, setProjectName, nextStep }) {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const count = parseInt(e.target.value, 10);
     setTrayCount(count);
     setTrayData(Array.from({ length: count }, () => ({ weight: '', time: '', material: 'PLA' })));
+  };
+
+  const handleProjectNameChange = (e) => {
+    setProjectName(e.target.value);
   };
 
   return (
@@ -22,7 +26,16 @@ export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, n
         </button>
       </div>
 
-      <h2>Paso 1: Selecciona la cantidad de bandejas</h2>
+      <h2>Paso 1: Informacion del proyecto</h2>
+      <div className='project-info'>
+        <label>Nombre del proyecto:</label>
+        <input
+          type="text"
+          value={projectName}
+          onChange={handleProjectNameChange}
+        />
+      
+      <label>cantidad de bandejas:</label>
       <input
         type="number"
         min="1"
@@ -30,6 +43,7 @@ export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, n
         onChange={handleChange}
         placeholder="Cantidad de bandejas"
       />
+      </div>
       <div className="button-group">
         <button type="button" className="btn-orange" onClick={nextStep} disabled={trayCount < 1}>
           Siguiente
