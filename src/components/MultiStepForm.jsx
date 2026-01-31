@@ -8,6 +8,7 @@ export default function MultiStepForm({ config }) {
   const [step, setStep] = useState(1);
   const [trayCount, setTrayCount] = useState(0);
   const [trayData, setTrayData] = useState([]);
+  const [projectName, setProjectName] = useState('');
   const [exiting, setExiting] = useState(false);
 
   const goToStep = (targetStep) => {
@@ -16,6 +17,13 @@ export default function MultiStepForm({ config }) {
       setStep(targetStep);
       setExiting(false);
     }, 300);
+  };
+
+  const resetAndCreateNew = () => {
+    setTrayCount(0);
+    setTrayData([]);
+    setProjectName('');
+    goToStep(1);
   };
 
   return (
@@ -28,6 +36,8 @@ export default function MultiStepForm({ config }) {
             trayCount={trayCount}
             setTrayCount={setTrayCount}
             setTrayData={setTrayData}
+            projectName={projectName}
+            setProjectName={setProjectName}
             nextStep={() => goToStep(2)}
           />
         </div>
@@ -46,7 +56,9 @@ export default function MultiStepForm({ config }) {
           <Step3Summary
             trayData={trayData}
             config={config}
+            projectName={projectName}
             prevStep={() => goToStep(2)}
+            resetAndCreateNew={resetAndCreateNew}
           />
         </div>
       </div>

@@ -1,6 +1,6 @@
 import PdfGenerator from './PdfGenerator';
 
-export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
+export default function Step3Summary({ trayData = [], config = {}, projectName = '', prevStep, resetAndCreateNew }) {
   // Redondeo al múltiplo de 50 más cercano
   const roundTo50 = (value) => Math.round((Number(value) || 0) / 50) * 50;
 
@@ -53,22 +53,14 @@ export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
   // Totales generales
   const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
   const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
-  const subtotalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray).subtotal, 0);
+  const totalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray).subtotal, 0);
 
-  // Margen e IVA aplicados solo al total
-  const marginPercent = Number(config.margin) || 0;
-  const subtotalWithMargin = subtotalGeneral * (1 + marginPercent / 100);
-  const marginAmount = subtotalWithMargin - subtotalGeneral;
-
-  const ivaPercent = Number(config.iva) || 0;
-  const ivaAmount = subtotalWithMargin * ivaPercent;
-  const totalWithIva = subtotalWithMargin + ivaAmount;
-
-  const totalRounded = roundTo50(totalWithIva);
+  const totalRounded = roundTo50(totalGeneral);
 
   return (
     <div>
       <h2>Paso 3: Resumen</h2>
+      {projectName && <p style={{ marginBottom: '1rem', fontWeight: 'bold', fontSize: '1.1rem' }}>Proyecto: {projectName}</p>}
 
       <table className="summary-table">
         <thead>
@@ -106,16 +98,13 @@ export default function Step3Summary({ trayData = [], config = {}, prevStep }) {
       <div className="summary-box">
         <p><strong>Peso total:</strong> {totalWeight} g</p>
         <p><strong>Tiempo total:</strong> {formatTotalTime(totalTime)}</p>
-        <p><strong>Subtotal general:</strong> ${Math.round(subtotalGeneral).toLocaleString('es-CL')} CLP</p>
-        <p><strong>Margen ({marginPercent}%):</strong> ${Math.round(marginAmount).toLocaleString('es-CL')} CLP</p>
-        <p><strong>Subtotal + margen:</strong> ${Math.round(subtotalWithMargin).toLocaleString('es-CL')} CLP</p>
-        <p><strong>IVA ({ivaPercent * 100}%):</strong> ${Math.round(ivaAmount).toLocaleString('es-CL')} CLP</p>
         <p className="total">💰 Precio total: ${totalRounded.toLocaleString('es-CL')} CLP</p>
       </div>
 
       <div className="button-group" style={{ marginTop: '1rem' }}>
         <button className="btn-white" onClick={prevStep}>Volver</button>
-        <PdfGenerator trayData={trayData} config={config} />
+        <PdfGenerator trayData={trayData} config={config} projectName={projectName} />
+        <button className="btn-dark" onClick={resetAndCreateNew}>Crear nueva cotización</button>
       </div>
     </div>
   );

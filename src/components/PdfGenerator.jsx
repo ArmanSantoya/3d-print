@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logoPath from '/logo.jpg';
 
-export default function PdfGenerator({ trayData, config }) {
+export default function PdfGenerator({ trayData, config, projectName = '' }) {
   const [showOptions, setShowOptions] = useState(false);
   const [includesDesign, setIncludesDesign] = useState(false);
 
@@ -50,16 +50,14 @@ export default function PdfGenerator({ trayData, config }) {
 
     const subtotalGeneral = rows.reduce((s, r) => s + r.cost, 0);
 
-    // aplicar margen e IVA solo al total
+    // aplicar margen solo al total
     const marginPercent = Number(config.margin) || 0;
     const subtotalWithMargin = subtotalGeneral * (1 + marginPercent / 100);
-    const ivaPercent = Number(config.iva) || 0;
-    const totalWithIva = subtotalWithMargin * (1 + ivaPercent);
 
     const designFeeValue = Number(config.designFee ?? 5000);
     const designFee = includeDesign ? designFeeValue : 0;
 
-    const totalToCharge = roundTo50(totalWithIva + designFee);
+    const totalToCharge = roundTo50(subtotalWithMargin + designFee);
 
     const rowsHtml = rows.map(r => `
       <tr>
@@ -77,6 +75,7 @@ export default function PdfGenerator({ trayData, config }) {
             <img src="${logoPath}" alt="Arman3D" crossorigin="anonymous" style="height:72px;object-fit:contain;" />
             <div>
               <h1 style="margin:0 0 4px 0;font-size:20px;">Cotización</h1>
+              ${projectName ? `<div style="font-size:14px;font-weight:bold;margin:4px 0;">Proyecto: ${projectName}</div>` : ''}
               <div style="font-size:12px;color:#666;">Generado: ${new Date().toLocaleString()}</div>
             </div>
           </div>
@@ -127,7 +126,7 @@ export default function PdfGenerator({ trayData, config }) {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      const filename = `Cotizacion_Arman3D_${new Date().toISOString().slice(0,10)}.pdf`;
+      const filename = `${new Date().toISOString().slice(0,10)}_proyecto_${projectName}.pdf`;
       pdf.save(filename);
     } catch (err) {
       console.error(err);
@@ -155,7 +154,7 @@ export default function PdfGenerator({ trayData, config }) {
             checked={includesDesign}
             onChange={(e) => setIncludesDesign(e.target.checked)}
           />
-          <span>Incluye diseño (+ $${config.designFee ?? 5000} CLP)</span>
+          <span>Incluye diseño (+ ${config.designFee ?? 5000} CLP)</span>
         </label>
 
         <div className="pdf-panel-actions">
