@@ -1,4 +1,5 @@
 import PdfGenerator from './PdfGenerator';
+import { calculateTrayDetails } from '../utils/costCalculator';
 
 export default function Step3Summary({ trayData = [], config = {}, projectName = '', prevStep, resetAndCreateNew }) {
   // Redondeo al múltiplo de 50 más cercano
@@ -20,42 +21,19 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
     return parts.join(' ');
   };
 
-  const calculateTrayDetails = (tray) => {
-    const weight = Number(tray.weight) || 0;
-    const time = Number(tray.time) || 0; // horas decimales
-    const materialKey = tray.material;
-
-    // Material
-    const materialPricePerKg = (config.materials && config.materials[materialKey]) || 0;
-    const pricePerGram = materialPricePerKg / 1000;
-    const materialCost = weight * pricePerGram;
-
-    // Energía real
-    const consumptionKw = Number(config.electricity?.consumptionKw) || 0;
-    const pricePerKwh = Number(config.electricity?.pricePerKwh) || 0;
-    const electricityCostPerHour = consumptionKw * pricePerKwh;
-    const electricityCost = time * electricityCostPerHour;
-
-    // Costo fijo de máquina por hora
-    const machineCost = time * (config.machineCostPerHour || 0);
-
-    // Subtotal directo (sin margen ni IVA)
-    const subtotal = materialCost + electricityCost + machineCost;
-
-    return {
-      materialCost: Math.round(materialCost),
-      electricityCost: Math.round(electricityCost),
-      machineCost: Math.round(machineCost),
-      subtotal: Math.round(subtotal)
-    };
-  };
-
-  // Totales generales
   const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
   const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
-  const totalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray).subtotal, 0);
+  const totalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray, config).subtotal, 0);
 
-  const totalRounded = roundTo50(totalGeneral);
+  // Aplicar margen
+  const marginPercent = Number(config.margin) || 0;
+  const subtotalWithMargin = totalGeneral * (1 + marginPercent / 100);
+
+  // Aplicar IVA
+  const ivaPercent = Number(config.iva) || 0;
+  const totalWithIVA = subtotalWithMargin * (1 + ivaPercent);
+
+  const totalRounded = roundTo50(totalWithIVA);
 
   return (
     <div>
@@ -69,6 +47,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
             <th>Peso (g)</th>
             <th>Tiempo (h)</th>
             <th>Material</th>
+            <th>Impresora</th>
             <th>Costo </th>
             <th>Energía </th>
             <th>Máquina </th>
@@ -77,7 +56,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
         </thead>
         <tbody>
           {trayData.map((tray, i) => {
-            const { materialCost, electricityCost, machineCost, subtotal } = calculateTrayDetails(tray);
+            const { materialCost, electricityCost, machineCost, subtotal } = calculateTrayDetails(tray, config);
 
             return (
               <tr key={i}>
@@ -85,6 +64,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
                 <td>{tray.weight}</td>
                 <td>{tray.time}</td>
                 <td>{tray.material}</td>
+                <td>{tray.printer}</td>
                 <td>${materialCost.toLocaleString('es-CL')}</td>
                 <td>${electricityCost.toLocaleString('es-CL')}</td>
                 <td>${machineCost.toLocaleString('es-CL')}</td>
@@ -98,6 +78,9 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
       <div className="summary-box">
         <p><strong>Peso total:</strong> {totalWeight} g</p>
         <p><strong>Tiempo total:</strong> {formatTotalTime(totalTime)}</p>
+        <p><strong>Subtotal:</strong> ${totalGeneral.toLocaleString('es-CL')} CLP</p>
+        <p><strong>Con margen ({marginPercent}%):</strong> ${Math.round(subtotalWithMargin).toLocaleString('es-CL')} CLP</p>
+        <p><strong>Con IVA ({ivaPercent * 100}%):</strong> ${Math.round(totalWithIVA).toLocaleString('es-CL')} CLP</p>
         <p className="total">💰 Precio total: ${totalRounded.toLocaleString('es-CL')} CLP</p>
       </div>
 

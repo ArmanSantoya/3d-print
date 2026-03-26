@@ -2,6 +2,7 @@ import { useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logoPath from '/logo.jpg';
+import { calculateTrayDetails } from '../utils/costCalculator';
 
 export default function PdfGenerator({ trayData, config, projectName = '' }) {
   const [showOptions, setShowOptions] = useState(false);
@@ -9,61 +10,40 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
 
   const roundTo50 = (value) => Math.round((Number(value) || 0) / 50) * 50;
 
-  const calculateTrayDetails = (tray) => {
-    const weight = Number(tray.weight) || 0;
-    const time = Number(tray.time) || 0; // horas decimales
-    const materialKey = tray.material;
-
-    // Material
-    const materialPricePerKg = (config.materials && config.materials[materialKey]) || 0;
-    const pricePerGram = materialPricePerKg / 1000;
-    const materialCost = weight * pricePerGram;
-
-    // Energía
-    const consumptionKw = Number(config.electricity?.consumptionKw) || 0;
-    const pricePerKwh = Number(config.electricity?.pricePerKwh) || 0;
-    const electricityCostPerHour = consumptionKw * pricePerKwh;
-    const electricityCost = time * electricityCostPerHour;
-
-    // Máquina
-    const machineCost = time * (config.machineCostPerHour || 0);
-
-    // Subtotal directo (sin margen ni IVA)
-    const subtotal = materialCost + electricityCost + machineCost;
-
-    return {
-      subtotal: Math.round(subtotal)
-    };
-  };
-
   const buildQuotationHtmlFragment = (includeDesign) => {
     const rows = trayData.map((tray, i) => {
-      const { subtotal } = calculateTrayDetails(tray);
+      const { subtotal } = calculateTrayDetails(tray, config);
       const rounded = roundTo50(subtotal);
       return {
         index: i + 1,
         weight: Number(tray.weight) || 0,
         material: tray.material || '',
+        printer: tray.printer || '',
         cost: rounded,
       };
     });
 
     const subtotalGeneral = rows.reduce((s, r) => s + r.cost, 0);
 
-    // aplicar margen solo al total
+    // aplicar margen
     const marginPercent = Number(config.margin) || 0;
     const subtotalWithMargin = subtotalGeneral * (1 + marginPercent / 100);
+
+    // aplicar IVA
+    const ivaPercent = Number(config.iva) || 0;
+    const subtotalWithMarginAndIVA = subtotalWithMargin * (1 + ivaPercent);
 
     const designFeeValue = Number(config.designFee ?? 5000);
     const designFee = includeDesign ? designFeeValue : 0;
 
-    const totalToCharge = roundTo50(subtotalWithMargin + designFee);
+    const totalToCharge = roundTo50(subtotalWithMarginAndIVA + designFee);
 
     const rowsHtml = rows.map(r => `
       <tr>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.index}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:right;">${r.weight} g</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.material}</td>
+        <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.printer}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:right;">$ ${r.cost.toLocaleString('es-CL')}</td>
       </tr>
     `).join('');
@@ -86,6 +66,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
                 <th style="border:1px solid #ccc;padding:8px;">Bandeja</th>
                 <th style="border:1px solid #ccc;padding:8px;">Peso</th>
                 <th style="border:1px solid #ccc;padding:8px;">Material</th>
+                <th style="border:1px solid #ccc;padding:8px;">Impresora</th>
                 <th style="border:1px solid #ccc;padding:8px;">Costo (CLP)</th>
               </tr>
             </thead>
@@ -96,6 +77,8 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
 
           <div style="margin-top:12px;font-size:1rem;">
             <p style="margin:4px 0;"><strong>Subtotal:</strong> $ ${subtotalGeneral.toLocaleString('es-CL')} CLP</p>
+            <p style="margin:4px 0;"><strong>Margen (${marginPercent}%):</strong> $ ${Math.round(subtotalWithMargin - subtotalGeneral).toLocaleString('es-CL')} CLP</p>
+            <p style="margin:4px 0;"><strong>IVA (${ivaPercent * 100}%):</strong> $ ${Math.round(subtotalWithMarginAndIVA - subtotalWithMargin).toLocaleString('es-CL')} CLP</p>
             <p style="margin:4px 0;"><strong>Recargo por diseño:</strong> $ ${designFee.toLocaleString('es-CL')} CLP</p>
             <h2 style="margin-top:12px;">Total a cobrar: $ ${totalToCharge.toLocaleString('es-CL')} CLP</h2>
           </div>

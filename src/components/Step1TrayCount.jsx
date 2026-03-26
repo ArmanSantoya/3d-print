@@ -6,7 +6,7 @@ export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, p
   const handleChange = (e) => {
     const count = parseInt(e.target.value, 10);
     setTrayCount(count);
-    setTrayData(Array.from({ length: count }, () => ({ weight: '', time: '', material: 'PLA' })));
+    setTrayData(Array.from({ length: count }, () => ({ weight: '', time: '', material: 'PLA', printer: 'P1S', hours: 0, minutes: 0 })));
   };
 
   const handleProjectNameChange = (e) => {

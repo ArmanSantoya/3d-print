@@ -6,8 +6,13 @@ export const defaultConfig = {
     TPU: 26500
   },
 
+  printers: {
+    'P1S': { consumptionKw: 0.35 },
+    'Snapmaker U1': { consumptionKw: 0.6 },
+    'Ender3 Standard': { consumptionKw: 0.3 }
+  },
+
   electricity: {
-    consumptionKw: 0.35,   // Consumo real de la P1S ≈ 350W
     pricePerKwh: 150       // CLP/kWh
   },
 

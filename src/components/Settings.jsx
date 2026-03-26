@@ -23,6 +23,19 @@ export default function Settings({ config, setConfig }) {
     }));
   };
 
+  const handlePrinterChange = (printer, value) => {
+    setConfig(prev => ({
+      ...prev,
+      printers: {
+        ...prev.printers,
+        [printer]: {
+          ...prev.printers[printer],
+          consumptionKw: parseFloat(value) || 0
+        }
+      }
+    }));
+  };
+
   const handleSimpleChange = (key, value) => {
     setConfig(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
   };
@@ -55,20 +68,25 @@ export default function Settings({ config, setConfig }) {
       <div className="settings-section">
         <h4>Electricidad</h4>
 
-        <label>Consumo impresora (kW):</label>
-        <input
-          type="number"
-          step="0.01"
-          value={config.electricity?.consumptionKw ?? 0}
-          onChange={e => handleElectricityChange('consumptionKw', e.target.value)}
-        />
-
         <label>Precio por kWh (CLP):</label>
         <input
           type="number"
           value={config.electricity?.pricePerKwh ?? 0}
           onChange={e => handleElectricityChange('pricePerKwh', e.target.value)}
         />
+
+        <h5>Consumo por impresora (kW)</h5>
+        {Object.keys(config.printers || {}).map(printer => (
+          <div key={printer}>
+            <label>{printer}:</label>
+            <input
+              type="number"
+              step="0.01"
+              value={config.printers[printer]?.consumptionKw ?? 0}
+              onChange={e => handlePrinterChange(printer, e.target.value)}
+            />
+          </div>
+        ))}
 
         <label>Coste fijo máquina por hora (CLP/h):</label>
         <input

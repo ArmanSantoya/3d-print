@@ -7,7 +7,19 @@ import { defaultConfig } from './config';
 export default function App() {
   const [config, setConfig] = useState(() => {
     const saved = localStorage.getItem('config');
-    return saved ? JSON.parse(saved) : defaultConfig;
+    let config = saved ? JSON.parse(saved) : defaultConfig;
+
+    // Migrate old config structure
+    if (config.electricity?.consumptionKw && !config.printers) {
+      config.printers = {
+        'P1S': { consumptionKw: config.electricity.consumptionKw },
+        'Snapmaker U1': { consumptionKw: 0.6 },
+        'Ender3 Standard': { consumptionKw: 0.3 }
+      };
+      delete config.electricity.consumptionKw;
+    }
+
+    return config;
   });
 
   return (

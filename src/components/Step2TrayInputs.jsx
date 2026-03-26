@@ -28,6 +28,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
       weight: '',
       time: '',
       material: 'PLA',
+      printer: 'P1S',
       hours: 0,
       minutes: 0
     }));
@@ -74,6 +75,16 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
       >
         {Object.keys(config.materials).map(mat => (
           <option key={mat} value={mat}>{mat}</option>
+        ))}
+      </select>
+
+      <label>Impresora: </label>
+      <select
+        value={tray.printer}
+        onChange={e => handleChange('printer', e.target.value, i)}
+      >
+        {Object.keys(config.printers).map(printer => (
+          <option key={printer} value={printer}>{printer}</option>
         ))}
       </select>
     </div>
