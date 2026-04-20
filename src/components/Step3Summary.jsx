@@ -1,11 +1,7 @@
 import PdfGenerator from './PdfGenerator';
-import { calculateTrayDetails } from '../utils/costCalculator';
+import { calculateTrayDetails, roundTo50 } from '../utils/costCalculator';
 
 export default function Step3Summary({ trayData = [], config = {}, projectName = '', prevStep, resetAndCreateNew }) {
-  // Redondeo al múltiplo de 50 más cercano
-  const roundTo50 = (value) => Math.round((Number(value) || 0) / 50) * 50;
-
-  // formatea tiempo total (horas decimales) a "Xd Yh Zm"
   const formatTotalTime = (hoursDecimal) => {
     let totalMinutes = Math.round((Number(hoursDecimal) || 0) * 60);
     const days = Math.floor(totalMinutes / (24 * 60));
@@ -25,11 +21,9 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
   const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
   const totalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray, config).subtotal, 0);
 
-  // Aplicar margen
   const marginPercent = Number(config.margin) || 0;
   const subtotalWithMargin = totalGeneral * (1 + marginPercent / 100);
 
-  // Aplicar IVA
   const ivaPercent = Number(config.iva) || 0;
   const totalWithIVA = subtotalWithMargin * (1 + ivaPercent);
 
@@ -38,7 +32,11 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
   return (
     <div>
       <h2>Paso 3: Resumen</h2>
-      {projectName && <p style={{ marginBottom: '1rem', fontWeight: 'bold', fontSize: '1.1rem' }}>Proyecto: {projectName}</p>}
+      {projectName && (
+        <p style={{ marginBottom: '1rem', fontWeight: 'bold', fontSize: '1.1rem' }}>
+          Proyecto: {projectName}
+        </p>
+      )}
 
       <table className="summary-table">
         <thead>
@@ -48,16 +46,15 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
             <th>Tiempo (h)</th>
             <th>Material</th>
             <th>Impresora</th>
-            <th>Costo </th>
-            <th>Energía </th>
-            <th>Máquina </th>
-            <th>Subtotal </th>
+            <th>Costo</th>
+            <th>Energía</th>
+            <th>Máquina</th>
+            <th>Subtotal</th>
           </tr>
         </thead>
         <tbody>
           {trayData.map((tray, i) => {
             const { materialCost, electricityCost, machineCost, subtotal } = calculateTrayDetails(tray, config);
-
             return (
               <tr key={i}>
                 <td>{i + 1}</td>
@@ -86,8 +83,8 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
 
       <div className="button-group" style={{ marginTop: '1rem' }}>
         <button className="btn-white" onClick={prevStep}>Volver</button>
-        <PdfGenerator trayData={trayData} config={config} projectName={projectName} />
         <button className="btn-dark" onClick={resetAndCreateNew}>Crear nueva cotización</button>
+        <PdfGenerator trayData={trayData} config={config} projectName={projectName} />
       </div>
     </div>
   );

@@ -23,14 +23,14 @@ export default function Settings({ config, setConfig }) {
     }));
   };
 
-  const handlePrinterChange = (printer, value) => {
+  const handlePrinterChange = (printer, field, value) => {
     setConfig(prev => ({
       ...prev,
       printers: {
         ...prev.printers,
         [printer]: {
           ...prev.printers[printer],
-          consumptionKw: parseFloat(value) || 0
+          [field]: parseFloat(value) || 0
         }
       }
     }));
@@ -78,22 +78,21 @@ export default function Settings({ config, setConfig }) {
         <h5>Consumo por impresora (kW)</h5>
         {Object.keys(config.printers || {}).map(printer => (
           <div key={printer}>
-            <label>{printer}:</label>
+            <label>{printer} - Consumo (kW):</label>
             <input
               type="number"
               step="0.01"
               value={config.printers[printer]?.consumptionKw ?? 0}
-              onChange={e => handlePrinterChange(printer, e.target.value)}
+              onChange={e => handlePrinterChange(printer, 'consumptionKw', e.target.value)}
+            />
+            <label>{printer} - Costo máquina (CLP/h):</label>
+            <input
+              type="number"
+              value={config.printers[printer]?.machineCostPerHour ?? 0}
+              onChange={e => handlePrinterChange(printer, 'machineCostPerHour', e.target.value)}
             />
           </div>
         ))}
-
-        <label>Coste fijo máquina por hora (CLP/h):</label>
-        <input
-          type="number"
-          value={config.machineCostPerHour ?? 0}
-          onChange={e => handleSimpleChange('machineCostPerHour', e.target.value)}
-        />
       </div>
 
       {/* Margen de ganancia */}
