@@ -116,12 +116,12 @@ export default function Settings({ config, setConfig }) {
           onChange={e => handleSimpleChange('designFee', e.target.value)}
         />
 
-        <label>IVA (decimal, ej. 0.19 = 19%):</label>
+        <label>Tasa de Retención para Boleta de Honorarios (decimal, ej. 0.1525 = 15.25%):</label>
         <input
           type="number"
-          step="0.01"
-          value={config.iva ?? 0}
-          onChange={e => handleSimpleChange('iva', e.target.value)}
+          step="0.0001"
+          value={config.retentionRate ?? 0.1525}
+          onChange={e => handleSimpleChange('retentionRate', e.target.value)}
         />
       </div>
 

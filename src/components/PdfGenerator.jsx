@@ -10,7 +10,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
 
   const buildQuotationHtmlFragment = (includeDesign) => {
     const marginPercent = Number(config.margin) || 0;
-    const ivaRate = Number(config.iva) || 0;
+    const retentionRate = Number(config.retentionRate) || 0.1525;
     const designFeeValue = includeDesign ? Number(config.designFee ?? 5000) : 0;
 
     // Precio por bandeja = subtotal de costos con margen aplicado
@@ -29,8 +29,10 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
 
     const subtotalImpresion = rows.reduce((s, r) => s + r.price, 0);
     const baseConDiseño = subtotalImpresion + designFeeValue;
-    const ivaAmount = Math.round(baseConDiseño * ivaRate);
-    const totalToCharge = roundTo50(baseConDiseño + ivaAmount);
+    // Cálculo para Boleta de Honorarios: Bruto = Líquido / (1 - retentionRate)
+    const brutoAmount = baseConDiseño / (1 - retentionRate);
+    const retentionAmount = Math.round(brutoAmount - baseConDiseño);
+    const totalToCharge = roundTo50(brutoAmount);
 
     const rowsHtml = rows
       .map(
@@ -76,10 +78,10 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
           </table>
 
           <div style="margin-top:12px;font-size:1rem;">
-            <p style="margin:4px 0;"><strong>Subtotal:</strong> $ ${subtotalImpresion.toLocaleString('es-CL')} CLP</p>
+            <p style="margin:4px 0;"><strong>Subtotal (Líquido):</strong> $ ${subtotalImpresion.toLocaleString('es-CL')} CLP</p>
             ${designRow}
-            <p style="margin:4px 0;"><strong>IVA (${ivaRate * 100}%):</strong> $ ${ivaAmount.toLocaleString('es-CL')} CLP</p>
-            <h2 style="margin-top:12px;">Total a cobrar: $ ${totalToCharge.toLocaleString('es-CL')} CLP</h2>
+            <p style="margin:4px 0;"><strong>Retención (15,25%):</strong> $ ${retentionAmount.toLocaleString('es-CL')} CLP</p>
+            <h2 style="margin-top:12px;">Monto Bruto (Boleta de Honorarios): $ ${totalToCharge.toLocaleString('es-CL')} CLP</h2>
           </div>
         </div>
       `,

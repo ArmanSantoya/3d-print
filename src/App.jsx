@@ -28,6 +28,12 @@ export default function App() {
       });
     }
 
+    // Migrate old IVA to retentionRate for Boletas de Honorarios
+    if (config.iva && !config.retentionRate) {
+      config.retentionRate = 0.1525; // New rate for Boletas de Honorarios
+      delete config.iva;
+    }
+
     return config;
   });
 

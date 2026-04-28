@@ -16,8 +16,8 @@ export const defaultConfig = {
     pricePerKwh: 150       // CLP/kWh
   },
 
-  margin: 30,              // % de ganancia sobre subtotal
-  iva: 0.19,               // 19% IVA
-  designFee: 5000          // CLP fijo por diseño
+  margin: 30,                    // % de ganancia sobre subtotal
+  retentionRate: 0.1525,         // 15.25% Retención para Boletas de Honorarios
+  designFee: 5000                // CLP fijo por diseño
 };
 export default defaultConfig;

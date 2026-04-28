@@ -24,10 +24,12 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
   const marginPercent = Number(config.margin) || 0;
   const subtotalWithMargin = totalGeneral * (1 + marginPercent / 100);
 
-  const ivaPercent = Number(config.iva) || 0;
-  const totalWithIVA = subtotalWithMargin * (1 + ivaPercent);
+  // Cálculo para Boleta de Honorarios: Bruto = Líquido / (1 - retentionRate)
+  const retentionRate = Number(config.retentionRate) || 0.1525;
+  const brutoAmount = subtotalWithMargin / (1 - retentionRate);
+  const retentionAmount = brutoAmount - subtotalWithMargin;
 
-  const totalRounded = roundTo50(totalWithIVA);
+  const totalRounded = roundTo50(brutoAmount);
 
   return (
     <div>
@@ -77,8 +79,9 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
         <p><strong>Tiempo total:</strong> {formatTotalTime(totalTime)}</p>
         <p><strong>Subtotal:</strong> ${totalGeneral.toLocaleString('es-CL')} CLP</p>
         <p><strong>Con margen ({marginPercent}%):</strong> ${Math.round(subtotalWithMargin).toLocaleString('es-CL')} CLP</p>
-        <p><strong>Con IVA ({ivaPercent * 100}%):</strong> ${Math.round(totalWithIVA).toLocaleString('es-CL')} CLP</p>
-        <p className="total">💰 Precio total: ${totalRounded.toLocaleString('es-CL')} CLP</p>
+        <p><strong>Retención (15,25%):</strong> ${Math.round(retentionAmount).toLocaleString('es-CL')} CLP</p>
+        <p className="total">💰 Monto Bruto (Boleta):</p>
+        <p className="total" style={{ fontSize: '1.5rem', marginTop: '0.5rem' }}>$ ${totalRounded.toLocaleString('es-CL')} CLP</p>
       </div>
 
       <div className="button-group" style={{ marginTop: '1rem' }}>
