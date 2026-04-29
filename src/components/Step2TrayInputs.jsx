@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import OrcaSlicerOCR from './OrcaSlicerOCR';
 
 export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevStep, config }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -24,24 +23,6 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
     setTrayData(updated);
   };
 
-  const handleOrcaSlicerData = (weight, timeDecimal, idx = currentIndex) => {
-    const updated = [...trayData];
-    
-    // Set weight in grams
-    updated[idx].weight = Math.round(weight);
-    
-    // Convert decimal hours to hours and minutes
-    const totalMinutes = Math.round(timeDecimal * 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    
-    updated[idx].hours = hours;
-    updated[idx].minutes = minutes;
-    updated[idx].time = timeDecimal;
-    
-    setTrayData(updated);
-  };
-
   const handleReset = () => {
     const reset = trayData.map(() => ({
       weight: '',
@@ -63,11 +44,6 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
   const renderTrayCard = (tray, i, total) => (
     <div className={`tray-card${total === 1 ? ' single' : ''}`} key={i}>
       <h4>Bandeja {i + 1} de {total}</h4>
-
-      <OrcaSlicerOCR
-        onDataExtracted={(weight, time) => handleOrcaSlicerData(weight, time, i)}
-        trayIndex={i}
-      />
 
       <label>Peso (g): </label>
       <input
