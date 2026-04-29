@@ -81,7 +81,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
         <p><strong>Con margen ({marginPercent}%):</strong> ${Math.round(subtotalWithMargin).toLocaleString('es-CL')} CLP</p>
         <p><strong>Retención (15,25%):</strong> ${Math.round(retentionAmount).toLocaleString('es-CL')} CLP</p>
         <p className="total">💰 Monto Bruto (Boleta):</p>
-        <p className="total" style={{ fontSize: '1.5rem', marginTop: '0.5rem' }}>$ ${totalRounded.toLocaleString('es-CL')} CLP</p>
+        <p className="total" style={{ fontSize: '1.5rem', marginTop: '0.5rem' }}>${totalRounded.toLocaleString('es-CL')} CLP</p>
       </div>
 
       <div className="button-group" style={{ marginTop: '1rem' }}>
