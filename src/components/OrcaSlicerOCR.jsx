@@ -16,8 +16,8 @@ export default function OrcaSlicerOCR({ onDataExtracted, trayIndex }) {
       setError('');
       setStatus('Procesando imagen...');
 
-      // Run OCR
-      const result = await Tesseract.recognize(file, 'spa');
+      // Run OCR with Spanish language support
+      const result = await Tesseract.recognize(file, ['spa', 'eng']);
       const extractedText = result.data.text;
 
       setStatus('Analizando datos...');
@@ -29,7 +29,9 @@ export default function OrcaSlicerOCR({ onDataExtracted, trayIndex }) {
       const validationErrors = [...parsedData.errors, ...validateParsedData(parsedData)];
 
       if (validationErrors.length > 0) {
-        setError(`Errores detectados:\n${validationErrors.join('\n')}`);
+        // Show the extracted text for manual correction
+        setManualText(extractedText);
+        setError(`Errores detectados:\n${validationErrors.join('\n')}\n\nEdita el texto a continuación:`);
         setShowManualInput(true);
         setStatus('');
       } else if (parsedData.weight && parsedData.time) {
