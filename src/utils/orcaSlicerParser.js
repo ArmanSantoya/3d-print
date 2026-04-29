@@ -1,8 +1,6 @@
 /**
  * Parses OrcaSlicer summary text to extract weight and time
- * Expected format:
- * Filamento total: 119.52 m, 350.72 g
- * Tiempo total: 1d21h24m (or 15h14m, or just h14m)
+ * Handles OCR errors like missing decimals
  */
 
 export const parseOrcaSlicerData = (text) => {
@@ -13,39 +11,59 @@ export const parseOrcaSlicerData = (text) => {
       errors: [],
     };
 
-    // Normalize text: remove extra spaces, handle common OCR issues
+    // Normalize text
     const normalizedText = text
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/\u00b0/g, '') // Remove degree symbols
-      .replace(/\|/g, 'I') // Replace | with I (OCR confusion)
+      .replace(/\s+/g, ' ')
+      .replace(/\u00b0/g, '')
+      .replace(/\|/g, 'I')
       .toLowerCase();
 
-    // Extract weight - be very specific
-    // Look for "filamento total" followed by numbers with "m," and then grab the g value
-    // Pattern: "filamento total: 119.52 m, 350.72 g" -> take 350.72
-    let weightMatch = normalizedText.match(/filamento\s+total:.*?(\d+[.,]\d+)\s*m[,\s]+(\d+[.,]\d+)\s*[g9]/i);
+    // Extract weight - look for "Filamento total:" line and extract the second number
+    // Pattern: "Filamento total: 119.52 m, 350.72 g" or "Filamento total: 11952m 350729" (OCR errors)
+    const filamentoLine = normalizedText.match(/filamento\s+total:\s*(.+?)(?:\n|modelo|coste|$)/i);
     
-    if (weightMatch) {
-      // Take the second number (the grams part)
-      let weight = parseFloat(weightMatch[2].replace(',', '.'));
-      // Validate weight is reasonable
-      if (weight > 0 && weight < 5000) {
-        result.weight = weight;
-      }
-    }
-
-    if (!result.weight) {
-      // Fallback: try to find any pattern with just "g" or "9" (OCR confusion)
-      // Get all numbers followed by g or 9
-      const allGMatches = normalizedText.match(/(\d+[.,]\d+)\s*[g9]/g);
-      if (allGMatches && allGMatches.length > 0) {
-        // Take the last one (usually the total filament)
-        const lastMatch = allGMatches[allGMatches.length - 1].match(/(\d+[.,]\d+)/);
-        if (lastMatch) {
-          let weight = parseFloat(lastMatch[1].replace(',', '.'));
-          if (weight > 0 && weight < 5000) {
-            result.weight = weight;
+    if (filamentoLine) {
+      const lineContent = filamentoLine[1];
+      // Extract all numbers from the line
+      const numbers = lineContent.match(/\d+/g) || [];
+      
+      if (numbers.length >= 2) {
+        // The second number should be the grams
+        // Handle OCR errors: if number is very large (>1000 for grams), it might be missing decimals
+        let weightNumber = parseInt(numbers[1]);
+        
+        // Smart decimal correction
+        // If weight > 5000, likely missing decimals. Probably format is XXX.YY
+        if (weightNumber > 5000) {
+          // Most likely case: OCR removed the decimal point
+          // "350729" should be "350.72" or "3507.29"?
+          // Use heuristic: typical filament weights are 200-400g, so:
+          // If > 5000, divide by 1000 and round
+          if (weightNumber > 5000 && weightNumber < 10000) {
+            // Likely "350729" → insert decimal: 3507.29 is too high, so try 350.72
+            // Most prints are <500g, so if result is >1000, it's wrong
+            // Let's try: if 5000-10000, likely should be XX0.YY or XXX.YZ format
+            // "350729" → take first 5 digits and insert before last 2: "3507.29"? No...
+            // Better: most filament is 200-500g. 350729 → could be missing decimal
+            // Try taking all but last 2 digits for decimal
+            let str = weightNumber.toString();
+            if (str.length > 5) {
+              // "350729" (6 digits) → "3507.29" (too high)
+              // Let's try different approach: remove trailing digits until reasonable
+              while (str.length > 3 && parseFloat(str) / 100 > 500) {
+                str = str.slice(0, -1);
+              }
+              weightNumber = parseFloat(str.slice(0, -2) + '.' + str.slice(-2));
+            } else if (str.length === 5) {
+              // "35072" → "350.72"
+              weightNumber = parseFloat(str.slice(0, 3) + '.' + str.slice(3));
+            }
           }
+        }
+        
+        // Final validation
+        if (weightNumber > 0 && weightNumber < 5000) {
+          result.weight = weightNumber;
         }
       }
     }
@@ -54,21 +72,17 @@ export const parseOrcaSlicerData = (text) => {
       result.errors.push('No se encontró el peso (Filamento total)');
     }
 
-    // Extract time from "Tiempo total: 1d21h24m" or "15h14m"
-    // More flexible regex to handle variations
+    // Extract time - same pattern as before
     let timeMatch = normalizedText.match(/tiempo\s+total:?\s*(\d+)\s*d\s*(\d+)\s*h\s*(\d+)\s*m/i);
     
     if (!timeMatch) {
-      // Try without days
       timeMatch = normalizedText.match(/tiempo\s+total:?\s*(\d+)\s*h\s*(\d+)\s*m/i);
       if (timeMatch) {
-        // Prepend 0 for days
         timeMatch = [timeMatch[0], '0', timeMatch[1], timeMatch[2]];
       }
     }
 
     if (!timeMatch) {
-      // Try looking for any "dhm" or "hm" pattern
       timeMatch = normalizedText.match(/(\d+)d(\d+)h(\d+)m/i);
     }
 
@@ -85,7 +99,6 @@ export const parseOrcaSlicerData = (text) => {
         const hours = parseInt(timeMatch[2]) || 0;
         const minutes = parseInt(timeMatch[3]) || 0;
 
-        // Convert to decimal hours
         const totalHours = days * 24 + hours + minutes / 60;
         if (totalHours > 0 && totalHours < 500) {
           result.time = parseFloat(totalHours.toFixed(2));
