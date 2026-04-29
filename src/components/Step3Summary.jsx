@@ -59,7 +59,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
             const { materialCost, electricityCost, machineCost, subtotal } = calculateTrayDetails(tray, config);
             return (
               <tr key={i}>
-                <td>{i + 1}</td>
+                <td>{tray.name || `Bandeja ${i + 1}`}</td>
                 <td>{tray.weight}</td>
                 <td>{tray.time}</td>
                 <td>{tray.material}</td>

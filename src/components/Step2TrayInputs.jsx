@@ -24,7 +24,8 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
   };
 
   const handleReset = () => {
-    const reset = trayData.map(() => ({
+    const reset = trayData.map((_, i) => ({
+      name: `Bandeja ${i + 1}`,
       weight: '',
       time: '',
       material: 'PLA',
@@ -43,7 +44,15 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
 
   const renderTrayCard = (tray, i, total) => (
     <div className={`tray-card${total === 1 ? ' single' : ''}`} key={i}>
-      <h4>Bandeja {i + 1} de {total}</h4>
+      <div style={{marginBottom: '1rem'}}>
+        <label>Nombre de bandeja: </label>
+        <input
+          type="text"
+          value={tray.name || ''}
+          onChange={e => handleChange('name', e.target.value, i)}
+          placeholder="Ej: Bandeja Superior"
+        />
+      </div>
 
       <label>Peso (g): </label>
       <input

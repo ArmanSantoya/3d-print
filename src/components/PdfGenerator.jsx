@@ -19,7 +19,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
       const { subtotal } = calculateTrayDetails(tray, config);
       const precioConMargen = Math.round(subtotal * (1 + marginPercent / 100));
       return {
-        index: i + 1,
+        name: tray.name || `Bandeja ${i + 1}`,
         weight: Number(tray.weight) || 0,
         material: tray.material || '',
         printer: tray.printer || '',
@@ -38,7 +38,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
       .map(
         (r) => `
       <tr>
-        <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.index}</td>
+        <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.name}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:right;">${r.weight} g</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.material}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.printer}</td>
