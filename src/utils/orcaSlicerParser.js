@@ -18,35 +18,35 @@ export const parseOrcaSlicerData = (text) => {
       .replace(/\s+/g, ' ') // Normalize whitespace
       .replace(/\u00b0/g, '') // Remove degree symbols
       .replace(/\|/g, 'I') // Replace | with I (OCR confusion)
-      .replace(/O/g, '0') // Try O as 0 in numbers (be careful with this)
       .toLowerCase();
 
-    // Extract weight from "Filamento total: X m, Y g" - be more flexible
-    // Try multiple patterns to catch variations
-    let weightMatch = normalizedText.match(/filamento\s+total:.*?(\d+[.,]\d+|\d+)\s*g/i);
-    if (!weightMatch) {
-      // Try without the "total" part
-      weightMatch = normalizedText.match(/filamento:.*?(\d+[.,]\d+|\d+)\s*g/i);
-    }
-    if (!weightMatch) {
-      // Try looking for just "g" with preceding number
-      const gMatches = normalizedText.match(/(\d+[.,]\d+|\d+)\s*g/g);
-      if (gMatches && gMatches.length > 0) {
-        // Take the last "g" value (usually the total)
-        weightMatch = normalizedText.match(/(\d+[.,]\d+|\d+)\s*g$/);
-        if (!weightMatch && gMatches.length >= 2) {
-          // If not at end, try second occurrence
-          const parts = normalizedText.split(/\d+[.,]\d+|\d+\s*g/);
-          weightMatch = gMatches[gMatches.length - 1].match(/(\d+[.,]\d+|\d+)/);
-        }
-      }
-    }
-
+    // Extract weight - be very specific
+    // Look for "filamento total" followed by numbers with "m," and then grab the g value
+    // Pattern: "filamento total: 119.52 m, 350.72 g" -> take 350.72
+    let weightMatch = normalizedText.match(/filamento\s+total:.*?(\d+[.,]\d+)\s*m[,\s]+(\d+[.,]\d+)\s*[g9]/i);
+    
     if (weightMatch) {
-      let weight = parseFloat(weightMatch[1].replace(',', '.'));
+      // Take the second number (the grams part)
+      let weight = parseFloat(weightMatch[2].replace(',', '.'));
       // Validate weight is reasonable
       if (weight > 0 && weight < 5000) {
         result.weight = weight;
+      }
+    }
+
+    if (!result.weight) {
+      // Fallback: try to find any pattern with just "g" or "9" (OCR confusion)
+      // Get all numbers followed by g or 9
+      const allGMatches = normalizedText.match(/(\d+[.,]\d+)\s*[g9]/g);
+      if (allGMatches && allGMatches.length > 0) {
+        // Take the last one (usually the total filament)
+        const lastMatch = allGMatches[allGMatches.length - 1].match(/(\d+[.,]\d+)/);
+        if (lastMatch) {
+          let weight = parseFloat(lastMatch[1].replace(',', '.'));
+          if (weight > 0 && weight < 5000) {
+            result.weight = weight;
+          }
+        }
       }
     }
 
