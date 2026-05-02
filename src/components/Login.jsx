@@ -23,7 +23,6 @@ export default function Login() {
       <div className="login-box">
         <div className="login-header">
           <img src="/3d-print/logo.jpg" alt="3D Pricing Calculator" className="login-logo" />
-          <h1>3D Pricing Calculator</h1>
           <p>Calculadora de costos para impresión 3D</p>
         </div>
 

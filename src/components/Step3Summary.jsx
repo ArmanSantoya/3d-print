@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MdCheckCircle, MdArrowBack, MdAddCircle, MdSave, MdPictureAsPdf } from 'react-icons/md';
 import PdfGenerator from './PdfGenerator';
 import { calculateTrayDetails, roundTo50 } from '../utils/costCalculator';
 import { projectsApi } from '../utils/database';
@@ -9,7 +10,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
 
   const handleSaveProject = async () => {
     if (!projectName.trim()) {
-      setSaveMessage('⚠️ Por favor ingresa un nombre para el proyecto');
+      setSaveMessage('Por favor ingresa un nombre para el proyecto');
       return;
     }
 
@@ -48,14 +49,15 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
       });
 
       await projectsApi.saveWithDetails(projectData, details);
-      setSaveMessage('✅ Proyecto guardado exitosamente');
+      setSaveMessage('Proyecto guardado exitosamente');
     } catch (error) {
       console.error('Error saving project:', error);
-      setSaveMessage('❌ Error al guardar el proyecto');
+      setSaveMessage('Error al guardar el proyecto');
     } finally {
       setIsSaving(false);
     }
   };
+
   const formatTotalTime = (hoursDecimal) => {
     let totalMinutes = Math.round((Number(hoursDecimal) || 0) * 60);
     const days = Math.floor(totalMinutes / (24 * 60));
@@ -78,7 +80,6 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
   const marginPercent = Number(config.margin) || 0;
   const subtotalWithMargin = totalGeneral * (1 + marginPercent / 100);
 
-  // Cálculo para Boleta de Honorarios: Bruto = Líquido / (1 - retentionRate)
   const retentionRate = Number(config.retentionRate) || 0.1525;
   const brutoAmount = subtotalWithMargin / (1 - retentionRate);
   const retentionAmount = brutoAmount - subtotalWithMargin;
@@ -87,75 +88,147 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
 
   return (
     <div>
-      <h2>Paso 3: Resumen</h2>
+      <h2 className="step-title">
+        <MdCheckCircle size={28} />
+        Resumen Final
+      </h2>
+
       {projectName && (
-        <p style={{ marginBottom: '1rem', fontWeight: 'bold', fontSize: '1.1rem' }}>
-          Proyecto: {projectName}
-        </p>
+        <div style={{ 
+          background: 'rgba(245, 124, 0, 0.05)', 
+          padding: '1rem', 
+          borderRadius: '8px', 
+          borderLeft: '4px solid #f57c00',
+          marginBottom: '1.5rem'
+        }}>
+          <p style={{ margin: 0, fontWeight: '600', color: '#333', fontSize: '1.05rem' }}>
+            Proyecto: {projectName}
+          </p>
+        </div>
       )}
 
-      <table className="summary-table">
-        <thead>
-          <tr>
-            <th>Bandeja</th>
-            <th>Peso (g)</th>
-            <th>Tiempo (h)</th>
-            <th>Material</th>
-            <th>Impresora</th>
-            <th>Costo</th>
-            <th>Energía</th>
-            <th>Máquina</th>
-            <th>Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trayData.map((tray, i) => {
-            const { materialCost, electricityCost, machineCost, subtotal } = calculateTrayDetails(tray, config);
-            return (
-              <tr key={i}>
-                <td>{tray.name || `Bandeja ${i + 1}`}</td>
-                <td>{tray.weight}</td>
-                <td>{tray.time}</td>
-                <td>{tray.material}</td>
-                <td>{tray.printer}</td>
-                <td>${materialCost.toLocaleString('es-CL')}</td>
-                <td>${electricityCost.toLocaleString('es-CL')}</td>
-                <td>${machineCost.toLocaleString('es-CL')}</td>
-                <td>${subtotal.toLocaleString('es-CL')}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      <div className="summary-box">
-        <p><strong>Peso total:</strong> {totalWeight} g</p>
-        <p><strong>Tiempo total:</strong> {formatTotalTime(totalTime)}</p>
-        <p><strong>Subtotal:</strong> ${totalGeneral.toLocaleString('es-CL')} CLP</p>
-        <p><strong>Con margen ({marginPercent}%):</strong> ${Math.round(subtotalWithMargin).toLocaleString('es-CL')} CLP</p>
-        <p><strong>Retención (15,25%):</strong> ${Math.round(retentionAmount).toLocaleString('es-CL')} CLP</p>
-        <p className="total">💰 Monto Bruto (Boleta):</p>
-        <p className="total" style={{ fontSize: '1.5rem', marginTop: '0.5rem' }}>${totalRounded.toLocaleString('es-CL')} CLP</p>
+      {/* Detalles por Bandeja */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#333', marginBottom: '1rem' }}>
+          Detalles de Bandejas
+        </h3>
+        <table className="summary-table">
+          <thead>
+            <tr>
+              <th>Bandeja</th>
+              <th>Peso (g)</th>
+              <th>Tiempo (h)</th>
+              <th>Material</th>
+              <th>Impresora</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {trayData.map((tray, i) => {
+              const { materialCost, electricityCost, machineCost, subtotal } = calculateTrayDetails(tray, config);
+              return (
+                <tr key={i}>
+                  <td>{tray.name || `Bandeja ${i + 1}`}</td>
+                  <td>{tray.weight}g</td>
+                  <td>{tray.time}h</td>
+                  <td>{tray.material}</td>
+                  <td>{tray.printer}</td>
+                  <td style={{ fontWeight: '600', color: '#f57c00' }}>${subtotal.toLocaleString('es-CL')}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
-      <div className="button-group" style={{ marginTop: '1rem' }}>
-        <button className="btn-white" onClick={prevStep}>Volver</button>
-        <button className="btn-dark" onClick={resetAndCreateNew}>Crear nueva cotización</button>
+      {/* Resumen de Costos */}
+      <div className="summary-info">
+        <div className="summary-item">
+          <div className="summary-item-label">Peso Total</div>
+          <div className="summary-item-value">{totalWeight}g</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-item-label">Tiempo Total</div>
+          <div className="summary-item-value">{formatTotalTime(totalTime)}</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-item-label">Subtotal Base</div>
+          <div className="summary-item-value">${totalGeneral.toLocaleString('es-CL')}</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-item-label">Con Margen ({marginPercent}%)</div>
+          <div className="summary-item-value">${Math.round(subtotalWithMargin).toLocaleString('es-CL')}</div>
+        </div>
+      </div>
+
+      {/* Cálculo Final */}
+      <div style={{
+        background: 'white',
+        border: '2px solid #f57c00',
+        borderRadius: '8px',
+        padding: '1.5rem',
+        marginTop: '1.5rem',
+        textAlign: 'center'
+      }}>
+        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontWeight: '600', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          Retención Boleta de Honorarios ({(retentionRate * 100).toFixed(2)}%)
+        </p>
+        <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.95rem', color: '#666' }}>
+          ${Math.round(retentionAmount).toLocaleString('es-CL')}
+        </p>
+        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontWeight: '600', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          Monto Bruto a Facturar
+        </p>
+        <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#f57c00' }}>
+          ${totalRounded.toLocaleString('es-CL')}
+        </p>
+      </div>
+
+      {/* Mensajes */}
+      {saveMessage && (
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          borderRadius: '8px',
+          background: saveMessage.includes('error') || saveMessage.includes('Error') ? '#ffebee' : '#e8f5e9',
+          color: saveMessage.includes('error') || saveMessage.includes('Error') ? '#c62828' : '#2e7d32',
+          textAlign: 'center',
+          fontWeight: '600',
+          fontSize: '0.95rem'
+        }}>
+          {saveMessage}
+        </div>
+      )}
+
+      {/* Botones */}
+      <div className="button-group">
         <button 
-          className="btn-dark" 
+          type="button" 
+          className="btn btn-secondary" 
+          onClick={prevStep}
+        >
+          <MdArrowBack size={20} />
+          Atrás
+        </button>
+        <button 
+          type="button" 
+          className="btn btn-secondary" 
+          onClick={resetAndCreateNew}
+        >
+          <MdAddCircle size={20} />
+          Nueva Cotización
+        </button>
+        <button 
+          type="button"
+          className="btn btn-success" 
           onClick={handleSaveProject}
           disabled={isSaving}
-          style={{ backgroundColor: '#4CAF50', cursor: isSaving ? 'not-allowed' : 'pointer' }}
         >
-          {isSaving ? '💾 Guardando...' : '💾 Guardar Proyecto'}
+          <MdSave size={20} />
+          {isSaving ? 'Guardando...' : 'Guardar Proyecto'}
         </button>
         <PdfGenerator trayData={trayData} config={config} projectName={projectName} />
       </div>
-      {saveMessage && (
-        <p style={{ marginTop: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
-          {saveMessage}
-        </p>
-      )}
     </div>
   );
 }

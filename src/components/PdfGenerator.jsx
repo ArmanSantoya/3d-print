@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MdPictureAsPdf, MdClose } from 'react-icons/md';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logoPath from '/logo.jpg';
@@ -140,11 +141,11 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
   return (
     <>
       <button
-        className="btn-orange"
+        className="btn btn-primary"
         onClick={() => setShowOptions((s) => !s)}
-        style={{ marginLeft: '0.5rem' }}
       >
-        Generar cotización (PDF)
+        <MdPictureAsPdf size={20} />
+        Generar PDF
       </button>
 
       <div className={`pdf-panel ${showOptions ? 'visible' : ''}`}>
@@ -171,16 +172,18 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
           </label>
         </div>
         <div className="pdf-panel-actions">
-          <button className="btn-white" onClick={() => setShowOptions(false)}>
+          <button className="btn btn-secondary" onClick={() => setShowOptions(false)}>
+            <MdClose size={20} />
             Cancelar
           </button>
           <button
-            className="btn-orange"
+            className="btn btn-primary"
             onClick={() => {
               setShowOptions(false);
               generatePdf(includesDesign, includeRetention);
             }}
           >
+            <MdPictureAsPdf size={20} />
             Descargar PDF
           </button>
         </div>

@@ -1,0 +1,29 @@
+/* Dashboard Layout */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 2rem;
+  margin-left: 250px;
+  margin-top: 70px;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
+
+/* Container */
+.dashboard-content > * {
+  max-width: 1200px;
+  margin: 0 auto;
+}

@@ -4,6 +4,8 @@ import Settings from './components/Settings';
 import MultiStepForm from './components/MultiStepForm';
 import SavedProjects from './components/SavedProjects';
 import Login from './components/Login';
+import Home from './components/Home';
+import DashboardLayout from './components/DashboardLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { defaultConfig } from './config';
@@ -46,9 +48,66 @@ export default function App() {
       <Router basename="/3d-print">
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<ProtectedRoute element={<MultiStepForm config={config} />} />} />
-          <Route path="/settings" element={<ProtectedRoute element={<Settings config={config} setConfig={setConfig} />} />} />
-          <Route path="/saved-projects" element={<ProtectedRoute element={<SavedProjects />} />} />
+          
+          {/* Dashboard Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute 
+                element={
+                  <DashboardLayout>
+                    <Home />
+                  </DashboardLayout>
+                } 
+              />
+            } 
+          />
+          
+          {/* Calculator Route */}
+          <Route 
+            path="/calculator" 
+            element={
+              <ProtectedRoute 
+                element={
+                  <DashboardLayout>
+                    <MultiStepForm config={config} />
+                  </DashboardLayout>
+                } 
+              />
+            } 
+          />
+          
+          {/* Saved Projects Route */}
+          <Route 
+            path="/saved-projects" 
+            element={
+              <ProtectedRoute 
+                element={
+                  <DashboardLayout>
+                    <SavedProjects />
+                  </DashboardLayout>
+                } 
+              />
+            } 
+          />
+          
+          {/* Settings Route */}
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute 
+                element={
+                  <DashboardLayout>
+                    <Settings config={config} setConfig={setConfig} />
+                  </DashboardLayout>
+                } 
+              />
+            } 
+          />
+          
+          {/* Redirect old paths */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
