@@ -296,6 +296,45 @@ export const usersApi = {
     return data
   },
 
+  // Check if user is super admin
+  async checkIfSuperAdmin(userId) {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('is_super_admin')
+      .eq('id', userId)
+      .single()
+
+    if (error && error.code !== 'PGRST116') throw error // PGRST116 = not found
+    return data?.is_super_admin || false
+  },
+
+  // Get all users (only for super admins)
+  async getAllUsers() {
+    try {
+      const { data, error } = await supabase.rpc('get_all_users')
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error getting all users:', error)
+      return []
+    }
+  },
+
+  // Update user permissions (only for super admins)
+  async updateUserPermissions(email, hasDashboardAccess, isSuperAdmin) {
+    try {
+      const { error } = await supabase.rpc('update_user_permissions', {
+        target_email: email,
+        new_dashboard_access: hasDashboardAccess,
+        new_super_admin: isSuperAdmin
+      })
+      if (error) throw error
+    } catch (error) {
+      console.error('Error updating user permissions:', error)
+      throw error
+    }
+  },
+
   // Remove user from authorized list
   async removeAuthorizedUser(email) {
     const { error } = await supabase

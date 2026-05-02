@@ -4,6 +4,8 @@ import Settings from './components/Settings';
 import MultiStepForm from './components/MultiStepForm';
 import SavedProjects from './components/SavedProjects';
 import Login from './components/Login';
+import Signup from './components/Signup';
+import AdminUsers from './components/AdminUsers';
 import Home from './components/Home';
 import DashboardLayout from './components/DashboardLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -48,6 +50,7 @@ export default function App() {
       <Router basename="/3d-print">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           
           {/* Dashboard Routes - Require dashboard access */}
           <Route 
@@ -72,6 +75,21 @@ export default function App() {
                 element={
                   <DashboardLayout>
                     <MultiStepForm config={config} />
+                  </DashboardLayout>
+                } 
+              />
+            } 
+          />
+          
+          {/* Admin Routes - Only for super admins */}
+          <Route 
+            path="/admin/users" 
+            element={
+              <ProtectedRoute 
+                requiresDashboardAccess={true}
+                element={
+                  <DashboardLayout>
+                    <AdminUsers />
                   </DashboardLayout>
                 } 
               />

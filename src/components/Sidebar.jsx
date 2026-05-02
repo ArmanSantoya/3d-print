@@ -1,19 +1,27 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { MdHome, MdDescription, MdFolderOpen, MdAssessment, MdClose, MdMenu } from 'react-icons/md'
+import { MdHome, MdDescription, MdFolderOpen, MdAssessment, MdClose, MdMenu, MdShield } from 'react-icons/md'
+import { useAuth } from '../context/AuthContext'
 import '../styles/sidebar.css'
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { isSuperAdmin } = useAuth()
 
   const isActive = (path) => location.pathname === path
 
-  const menuItems = [
+  const baseMenuItems = [
     { path: '/dashboard', label: 'Home', icon: MdHome },
     { path: '/calculator', label: 'Cotizaciones', icon: MdDescription },
     { path: '/saved-projects', label: 'Proyectos', icon: MdFolderOpen },
     { path: '/reports', label: 'Reportes', icon: MdAssessment },
   ]
+
+  const adminMenuItems = isSuperAdmin ? [
+    { path: '/admin/users', label: 'Administración', icon: MdShield }
+  ] : []
+
+  const menuItems = [...baseMenuItems, ...adminMenuItems]
 
   const handleNavigate = (path) => {
     navigate(path)
@@ -39,7 +47,7 @@ export default function Sidebar({ isOpen, onClose }) {
             return (
               <button
                 key={item.path}
-                className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+                className={`nav-item ${isActive(item.path) ? 'active' : ''} ${item.icon === MdShield ? 'admin-item' : ''}`}
                 onClick={() => handleNavigate(item.path)}
                 title={item.label}
               >

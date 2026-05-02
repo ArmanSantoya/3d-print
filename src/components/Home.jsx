@@ -6,7 +6,7 @@ import { projectsApi } from '../utils/database'
 import '../styles/home.css'
 
 export default function Home() {
-  const { user } = useAuth()
+  const { user, isSuperAdmin } = useAuth()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
@@ -15,13 +15,21 @@ export default function Home() {
     if (user?.id) {
       loadProjects()
     }
-  }, [user])
+  }, [user, isSuperAdmin])
 
   const loadProjects = async () => {
     try {
       setLoading(true)
-      // Load only user's projects
-      const data = await projectsApi.getUserProjects(user.id)
+      let data
+      
+      if (isSuperAdmin) {
+        // Super admin sees all projects
+        data = await projectsApi.getAll()
+      } else {
+        // Regular users see only their projects
+        data = await projectsApi.getUserProjects(user.id)
+      }
+      
       // Get last 5 projects
       setProjects(data.slice(0, 5))
     } catch (error) {

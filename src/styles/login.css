@@ -230,6 +230,127 @@
   font-weight: 500;
 }
 
+/* Email/Password Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.login-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.login-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.login-form input {
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 3px rgba(245, 124, 0, 0.1);
+}
+
+.login-form input:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.email-signin-button {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(245, 124, 0, 0.3);
+  margin-bottom: 15px;
+}
+
+.email-signin-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 124, 0, 0.4);
+}
+
+.email-signin-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.email-signin-button:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.signup-link {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-top: 1rem;
+}
+
+.signup-link a {
+  color: #f57c00;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.signup-link a:hover {
+  color: #e65100;
+  text-decoration: underline;
+}
+
+.login-success {
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  border-radius: 8px;
+  color: #2e7d32;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-note {
+  font-size: 13px;
+  color: #999;
+  margin: 15px 0 0 0;
+  text-align: center;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .login-box {
@@ -261,5 +382,15 @@
     padding: 12px 16px;
     font-size: 15px;
     gap: 10px;
+  }
+
+  .email-signin-button {
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+
+  .login-form input {
+    padding: 11px 12px;
+    font-size: 14px;
   }
 }

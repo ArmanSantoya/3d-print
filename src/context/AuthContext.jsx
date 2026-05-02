@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../supabase'
+import { supabase, features } from '../supabase'
 import { usersApi } from '../utils/database'
 
 const AuthContext = createContext()
@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [hasAccess, setHasAccess] = useState(false)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [loadingAccess, setLoadingAccess] = useState(false)
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export function AuthProvider({ children }) {
           await checkUserAccess(userData)
         } else {
           setHasAccess(false)
+          setIsSuperAdmin(false)
         }
       }
     )
@@ -61,17 +63,25 @@ export function AuthProvider({ children }) {
       // Check dashboard access
       const hasAccess = await usersApi.checkDashboardAccess(userData.email)
       setHasAccess(hasAccess)
+
+      // Check if super admin
+      const isSuperAdmin = await usersApi.checkIfSuperAdmin(userData.id)
+      setIsSuperAdmin(isSuperAdmin)
     } catch (error) {
       console.error('Error checking user access:', error)
       setHasAccess(false)
+      setIsSuperAdmin(false)
     } finally {
       setLoadingAccess(false)
     }
   }
 
   const signInWithGoogle = async () => {
+    if (!features.googleAuth) {
+      throw new Error('Google authentication is disabled')
+    }
+    
     try {
-      // Get the current origin and add the app path
       const origin = window.location.origin
       const redirectUrl = `${origin}/3d-print/`
       
@@ -90,10 +100,42 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const signInWithEmail = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error signing in with email:', error)
+      throw error
+    }
+  }
+
+  const signUpWithEmail = async (email, password, fullName = '') => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
+      })
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error signing up with email:', error)
+      throw error
+    }
+  }
+
   const getUserName = () => {
     if (!user) return null
-    // Try to get full name from Google metadata
-    return user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
+    return user.user_metadata?.full_name || user.email?.split('@')[0]
   }
 
   const logout = async () => {
@@ -102,6 +144,7 @@ export function AuthProvider({ children }) {
       if (error) throw error
       setUser(null)
       setHasAccess(false)
+      setIsSuperAdmin(false)
     } catch (error) {
       console.error('Error logging out:', error)
       throw error
@@ -109,7 +152,20 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, hasAccess, loadingAccess, signInWithGoogle, logout, getUserName, checkUserAccess }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      hasAccess, 
+      isSuperAdmin,
+      loadingAccess, 
+      signInWithGoogle, 
+      signInWithEmail,
+      signUpWithEmail,
+      logout, 
+      getUserName, 
+      checkUserAccess,
+      features
+    }}>
       {children}
     </AuthContext.Provider>
   )
