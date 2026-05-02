@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function MultiStepForm({ config }) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, getUserName } = useAuth();
   const [step, setStep] = useState(1);
   const [trayCount, setTrayCount] = useState(0);
   const [trayData, setTrayData] = useState([]);
@@ -41,35 +41,45 @@ export default function MultiStepForm({ config }) {
 
   return (
     <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <img src="/3d-print/logo.jpg" alt="Logo" style={{ height: '100px' }} />
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <div style={{ fontSize: '0.85rem', color: '#666', paddingRight: '0.5rem' }}>
-            {user?.email}
+      <header className="app-header">
+        <div className="header-logo">
+          <img src="/3d-print/logo.jpg" alt="Logo" className="logo-img" />
+        </div>
+        
+        <nav className="header-nav">
+          <button 
+            className="nav-button projects-btn"
+            onClick={() => navigate('/saved-projects')}
+            title="Ver proyectos guardados"
+          >
+            <span className="nav-icon">📁</span>
+            <span className="nav-label">Mis Proyectos</span>
+          </button>
+          
+          <button 
+            className="nav-button settings-btn"
+            onClick={() => navigate('/settings')}
+            title="Configuración"
+          >
+            <span className="nav-icon">⚙️</span>
+            <span className="nav-label">Configuración</span>
+          </button>
+        </nav>
+
+        <div className="header-user">
+          <div className="user-info">
+            <div className="user-email">{getUserName()}</div>
           </div>
           <button 
-            className="btn-white" 
-            onClick={() => navigate('/saved-projects')}
-            style={{ fontSize: '0.9rem' }}
-          >
-            📁 Mis Proyectos
-          </button>
-          <button 
-            className="btn-white" 
-            onClick={() => navigate('/settings')}
-            style={{ fontSize: '0.9rem' }}
-          >
-            ⚙️ Configuración
-          </button>
-          <button 
-            className="btn-white" 
+            className="nav-button logout-btn"
             onClick={handleLogout}
-            style={{ fontSize: '0.9rem' }}
+            title="Cerrar sesión"
           >
-            🚪 Salir
+            <span className="nav-icon">🚪</span>
+            <span className="nav-label">Salir</span>
           </button>
         </div>
-      </div>
+      </header>
 
       <div className="step-wrapper">
         <div className={`step-container ${step === 1 ? (exiting ? 'exiting' : 'active') : ''}`}>

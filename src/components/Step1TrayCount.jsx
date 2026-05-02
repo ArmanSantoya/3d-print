@@ -1,7 +1,5 @@
-import { useNavigate } from 'react-router-dom';
 
 export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, projectName, setProjectName, nextStep }) {
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const count = parseInt(e.target.value, 10);
@@ -15,16 +13,6 @@ export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, p
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          type="button"
-          className="btn-white"
-          onClick={() => navigate('/settings')}
-          title="Configuración"
-        >
-          ⚙️
-        </button>
-      </div>
 
       <h2>Paso 1: Informacion del proyecto</h2>
       <div className='project-info'>

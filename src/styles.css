@@ -18,6 +18,162 @@ body {
   min-height: 760px;
 }
 
+/* App Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.header-logo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logo-img {
+  height: 70px;
+  width: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.logo-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.header-nav {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.user-info {
+  text-align: right;
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: 500;
+  word-break: break-word;
+  max-width: 150px;
+}
+
+/* Navigation Buttons */
+.nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(245, 124, 0, 0.2);
+  white-space: nowrap;
+}
+
+.nav-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(245, 124, 0, 0.3);
+}
+
+.nav-button:active {
+  transform: translateY(0);
+}
+
+.nav-icon {
+  font-size: 1rem;
+}
+
+.nav-label {
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #e63946 100%);
+  box-shadow: 0 2px 8px rgba(230, 57, 70, 0.2);
+  padding: 0.7rem 1.2rem;
+}
+
+.logout-btn:hover {
+  box-shadow: 0 4px 16px rgba(230, 57, 70, 0.3);
+}
+
+@media (max-width: 1024px) {
+  .app-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-logo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-nav {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-user {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .user-email {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .logo-img {
+    height: 60px;
+  }
+
+  .nav-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .nav-icon {
+    font-size: 1.2rem;
+  }
+
+  .logout-btn {
+    padding: 0.6rem 0.8rem;
+  }
+}
+
 /* Typography */
 h1,
 h2,

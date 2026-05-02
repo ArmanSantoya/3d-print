@@ -37,10 +37,16 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = async () => {
     try {
+      // Get the current origin and add the app path
+      const origin = window.location.origin
+      const redirectUrl = `${origin}/3d-print/`
+      
+      console.log('🔐 Redirecting OAuth to:', redirectUrl)
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/3d-print/`,
+          redirectTo: redirectUrl,
         },
       })
       if (error) throw error
@@ -48,6 +54,12 @@ export function AuthProvider({ children }) {
       console.error('Error signing in with Google:', error)
       throw error
     }
+  }
+
+  const getUserName = () => {
+    if (!user) return null
+    // Try to get full name from Google metadata
+    return user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
   }
 
   const logout = async () => {
@@ -62,7 +74,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, logout, getUserName }}>
       {children}
     </AuthContext.Provider>
   )
