@@ -1,14 +1,21 @@
 import { useState } from 'react';
 import { MdCheckCircle, MdArrowBack, MdAddCircle, MdSave, MdPictureAsPdf } from 'react-icons/md';
+import { useAuth } from '../context/AuthContext';
 import PdfGenerator from './PdfGenerator';
 import { calculateTrayDetails, roundTo50 } from '../utils/costCalculator';
 import { projectsApi } from '../utils/database';
 
 export default function Step3Summary({ trayData = [], config = {}, projectName = '', prevStep, resetAndCreateNew }) {
+  const { user, hasAccess } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
   const handleSaveProject = async () => {
+    if (!user?.id) {
+      setSaveMessage('Debes iniciar sesión para guardar proyectos');
+      return;
+    }
+
     if (!projectName.trim()) {
       setSaveMessage('Por favor ingresa un nombre para el proyecto');
       return;
@@ -48,7 +55,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
         };
       });
 
-      await projectsApi.saveWithDetails(projectData, details);
+      await projectsApi.saveWithDetails(projectData, details, user.id);
       setSaveMessage('Proyecto guardado exitosamente');
     } catch (error) {
       console.error('Error saving project:', error);
@@ -185,6 +192,22 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
       </div>
 
       {/* Mensajes */}
+      {!hasAccess && (
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          borderRadius: '8px',
+          background: '#fff3e0',
+          color: '#e65100',
+          textAlign: 'center',
+          fontWeight: '600',
+          fontSize: '0.95rem',
+          border: '1px solid #ffb74d'
+        }}>
+          ⚠️ No tienes permiso para guardar proyectos. Puedes generar cotizaciones y PDFs, pero no podrás guardarlos.
+        </div>
+      )}
+
       {saveMessage && (
         <div style={{
           marginTop: '1rem',
@@ -218,15 +241,17 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
           <MdAddCircle size={20} />
           Nueva Cotización
         </button>
-        <button 
-          type="button"
-          className="btn btn-success" 
-          onClick={handleSaveProject}
-          disabled={isSaving}
-        >
-          <MdSave size={20} />
-          {isSaving ? 'Guardando...' : 'Guardar Proyecto'}
-        </button>
+        {hasAccess && (
+          <button 
+            type="button"
+            className="btn btn-success" 
+            onClick={handleSaveProject}
+            disabled={isSaving}
+          >
+            <MdSave size={20} />
+            {isSaving ? 'Guardando...' : 'Guardar Proyecto'}
+          </button>
+        )}
         <PdfGenerator trayData={trayData} config={config} projectName={projectName} />
       </div>
     </div>

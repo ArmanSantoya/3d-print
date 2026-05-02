@@ -1,22 +1,27 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MdAdd, MdEdit, MdPrint, MdCheckCircle, MdPayments } from 'react-icons/md'
+import { useAuth } from '../context/AuthContext'
 import { projectsApi } from '../utils/database'
 import '../styles/home.css'
 
 export default function Home() {
+  const { user } = useAuth()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    loadProjects()
-  }, [])
+    if (user?.id) {
+      loadProjects()
+    }
+  }, [user])
 
   const loadProjects = async () => {
     try {
       setLoading(true)
-      const data = await projectsApi.getAll()
+      // Load only user's projects
+      const data = await projectsApi.getUserProjects(user.id)
       // Get last 5 projects
       setProjects(data.slice(0, 5))
     } catch (error) {

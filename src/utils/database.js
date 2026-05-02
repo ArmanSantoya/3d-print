@@ -64,11 +64,23 @@ export const materialsApi = {
 
 // Projects operations
 export const projectsApi = {
-  // Get all projects
+  // Get all projects (admin only - kept for backward compatibility)
   async getAll() {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  // Get user's projects (filtered by user_id)
+  async getUserProjects(userId) {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -96,11 +108,11 @@ export const projectsApi = {
     return { ...project, details }
   },
 
-  // Create new project
-  async create(projectData) {
+  // Create new project with user_id
+  async create(projectData, userId) {
     const { data, error } = await supabase
       .from('projects')
-      .insert([projectData])
+      .insert([{ ...projectData, user_id: userId }])
       .select()
 
     if (error) throw error
@@ -139,9 +151,9 @@ export const projectsApi = {
   },
 
   // Save project with details (for saving calculator results)
-  async saveWithDetails(projectData, details) {
+  async saveWithDetails(projectData, details, userId) {
     // Start transaction-like operation
-    const project = await this.create(projectData)
+    const project = await this.create(projectData, userId)
 
     const detailsWithProjectId = details.map(detail => ({
       ...detail,
@@ -205,5 +217,92 @@ export const dbUtils = {
     if (!material) return 0
 
     return material.cost_per_kg / 1000 // Convert kg to g
+  }
+}
+
+// Users operations - for access control
+export const usersApi = {
+  // Check if user is authorized for dashboard access
+  async checkDashboardAccess(email) {
+    const { data, error } = await supabase
+      .from('authorized_users')
+      .select('has_dashboard_access')
+      .eq('email', email.toLowerCase())
+      .single()
+
+    if (error && error.code !== 'PGRST116') throw error // PGRST116 = not found
+    return data?.has_dashboard_access || false
+  },
+
+  // Get or create user profile
+  async getOrCreateProfile(userData) {
+    if (!userData?.id || !userData?.email) {
+      throw new Error('User data must include id and email')
+    }
+
+    const { data: existing, error: selectError } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userData.id)
+      .single()
+
+    if (existing) return existing
+
+    // Check if email is in authorized_users
+    const hasAccess = await this.checkDashboardAccess(userData.email)
+
+    // Create new profile
+    const { data: profile, error: insertError } = await supabase
+      .from('user_profiles')
+      .insert([{
+        id: userData.id,
+        email: userData.email.toLowerCase(),
+        full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0],
+        has_dashboard_access: hasAccess
+      }])
+      .select()
+      .single()
+
+    if (insertError) throw insertError
+    return profile
+  },
+
+  // Update user profile
+  async updateProfile(userId, updates) {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  // Add user to authorized list
+  async addAuthorizedUser(email, fullName = null) {
+    const { data, error } = await supabase
+      .from('authorized_users')
+      .insert([{
+        email: email.toLowerCase(),
+        full_name: fullName,
+        has_dashboard_access: true
+      }])
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  // Remove user from authorized list
+  async removeAuthorizedUser(email) {
+    const { error } = await supabase
+      .from('authorized_users')
+      .delete()
+      .eq('email', email.toLowerCase())
+
+    if (error) throw error
   }
 }

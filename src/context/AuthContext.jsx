@@ -1,11 +1,14 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { usersApi } from '../utils/database'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [hasAccess, setHasAccess] = useState(false)
+  const [loadingAccess, setLoadingAccess] = useState(false)
 
   useEffect(() => {
     // Check if user is already logged in
@@ -13,7 +16,13 @@ export function AuthProvider({ children }) {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
         if (error) throw error
-        setUser(session?.user || null)
+        
+        const userData = session?.user || null
+        setUser(userData)
+        
+        if (userData) {
+          await checkUserAccess(userData)
+        }
       } catch (error) {
         console.error('Error checking auth session:', error)
       } finally {
@@ -25,8 +34,15 @@ export function AuthProvider({ children }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null)
+      async (event, session) => {
+        const userData = session?.user || null
+        setUser(userData)
+        
+        if (userData) {
+          await checkUserAccess(userData)
+        } else {
+          setHasAccess(false)
+        }
       }
     )
 
@@ -34,6 +50,24 @@ export function AuthProvider({ children }) {
       subscription?.unsubscribe()
     }
   }, [])
+
+  const checkUserAccess = async (userData) => {
+    try {
+      setLoadingAccess(true)
+      
+      // Get or create user profile
+      await usersApi.getOrCreateProfile(userData)
+      
+      // Check dashboard access
+      const hasAccess = await usersApi.checkDashboardAccess(userData.email)
+      setHasAccess(hasAccess)
+    } catch (error) {
+      console.error('Error checking user access:', error)
+      setHasAccess(false)
+    } finally {
+      setLoadingAccess(false)
+    }
+  }
 
   const signInWithGoogle = async () => {
     try {
@@ -67,6 +101,7 @@ export function AuthProvider({ children }) {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       setUser(null)
+      setHasAccess(false)
     } catch (error) {
       console.error('Error logging out:', error)
       throw error
@@ -74,7 +109,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, logout, getUserName }}>
+    <AuthContext.Provider value={{ user, loading, hasAccess, loadingAccess, signInWithGoogle, logout, getUserName, checkUserAccess }}>
       {children}
     </AuthContext.Provider>
   )

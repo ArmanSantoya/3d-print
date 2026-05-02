@@ -49,11 +49,12 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           
-          {/* Dashboard Routes */}
+          {/* Dashboard Routes - Require dashboard access */}
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute 
+                requiresDashboardAccess={true}
                 element={
                   <DashboardLayout>
                     <Home />
@@ -63,7 +64,7 @@ export default function App() {
             } 
           />
           
-          {/* Calculator Route */}
+          {/* Calculator Route - Open to all authenticated users */}
           <Route 
             path="/calculator" 
             element={
@@ -77,11 +78,12 @@ export default function App() {
             } 
           />
           
-          {/* Saved Projects Route */}
+          {/* Saved Projects Route - Require dashboard access */}
           <Route 
             path="/saved-projects" 
             element={
               <ProtectedRoute 
+                requiresDashboardAccess={true}
                 element={
                   <DashboardLayout>
                     <SavedProjects />
@@ -91,11 +93,12 @@ export default function App() {
             } 
           />
           
-          {/* Settings Route */}
+          {/* Settings Route - Require dashboard access */}
           <Route 
             path="/settings" 
             element={
               <ProtectedRoute 
+                requiresDashboardAccess={true}
                 element={
                   <DashboardLayout>
                     <Settings config={config} setConfig={setConfig} />
