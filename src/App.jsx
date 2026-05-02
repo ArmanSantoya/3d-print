@@ -1,7 +1,11 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Settings from './components/Settings';
 import MultiStepForm from './components/MultiStepForm';
+import SavedProjects from './components/SavedProjects';
+import Login from './components/Login';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 import { defaultConfig } from './config';
 
 export default function App() {
@@ -38,11 +42,15 @@ export default function App() {
   });
 
   return (
-    <Router basename="/3d-print">
-      <Routes>
-        <Route path="/" element={<MultiStepForm config={config} />} />
-        <Route path="/settings" element={<Settings config={config} setConfig={setConfig} />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router basename="/3d-print">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute element={<MultiStepForm config={config} />} />} />
+          <Route path="/settings" element={<ProtectedRoute element={<Settings config={config} setConfig={setConfig} />} />} />
+          <Route path="/saved-projects" element={<ProtectedRoute element={<SavedProjects />} />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }

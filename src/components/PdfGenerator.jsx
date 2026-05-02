@@ -7,8 +7,9 @@ import { calculateTrayDetails, roundTo50 } from '../utils/costCalculator';
 export default function PdfGenerator({ trayData, config, projectName = '' }) {
   const [showOptions, setShowOptions] = useState(false);
   const [includesDesign, setIncludesDesign] = useState(false);
+  const [includeRetention, setIncludeRetention] = useState(true);
 
-  const buildQuotationHtmlFragment = (includeDesign) => {
+  const buildQuotationHtmlFragment = (includeDesign, applyRetention) => {
     const marginPercent = Number(config.margin) || 0;
     const retentionRate = Number(config.retentionRate) || 0.1525;
     const designFeeValue = includeDesign ? Number(config.designFee ?? 5000) : 0;
@@ -29,10 +30,19 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
 
     const subtotalImpresion = rows.reduce((s, r) => s + r.price, 0);
     const baseConDiseño = subtotalImpresion + designFeeValue;
-    // Cálculo para Boleta de Honorarios: Bruto = Líquido / (1 - retentionRate)
-    const brutoAmount = baseConDiseño / (1 - retentionRate);
-    const retentionAmount = Math.round(brutoAmount - baseConDiseño);
-    const totalToCharge = roundTo50(brutoAmount);
+    
+    let totalToCharge, retentionAmount;
+    
+    if (applyRetention) {
+      // Cálculo para Boleta de Honorarios: Bruto = Líquido / (1 - retentionRate)
+      const brutoAmount = baseConDiseño / (1 - retentionRate);
+      retentionAmount = Math.round(brutoAmount - baseConDiseño);
+      totalToCharge = roundTo50(brutoAmount);
+    } else {
+      // Sin retención: mostrar el monto líquido
+      totalToCharge = roundTo50(baseConDiseño);
+      retentionAmount = 0;
+    }
 
     const rowsHtml = rows
       .map(
@@ -51,6 +61,12 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
     const designRow = includeDesign
       ? `<p style="margin:4px 0;"><strong>Recargo por diseño:</strong> $ ${designFeeValue.toLocaleString('es-CL')} CLP</p>`
       : '';
+
+    const retentionRow = applyRetention
+      ? `<p style="margin:4px 0;"><strong>Retención (15,25%):</strong> $ ${retentionAmount.toLocaleString('es-CL')} CLP</p>`
+      : '';
+
+    const totalLabel = applyRetention ? 'Monto Bruto (Boleta de Honorarios)' : 'Monto Total';
 
     return {
       html: `
@@ -78,10 +94,10 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
           </table>
 
           <div style="margin-top:12px;font-size:1rem;">
-            <p style="margin:4px 0;"><strong>Subtotal (Líquido):</strong> $ ${subtotalImpresion.toLocaleString('es-CL')} CLP</p>
+            <p style="margin:4px 0;"><strong>Subtotal (Líquido):</strong> $ ${baseConDiseño.toLocaleString('es-CL')} CLP</p>
             ${designRow}
-            <p style="margin:4px 0;"><strong>Retención (15,25%):</strong> $ ${retentionAmount.toLocaleString('es-CL')} CLP</p>
-            <h2 style="margin-top:12px;">Monto Bruto (Boleta de Honorarios): $ ${totalToCharge.toLocaleString('es-CL')} CLP</h2>
+            ${retentionRow}
+            <h2 style="margin-top:12px;">${totalLabel}: $ ${totalToCharge.toLocaleString('es-CL')} CLP</h2>
           </div>
         </div>
       `,
@@ -89,8 +105,8 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
     };
   };
 
-  const generatePdf = async (includeDesign) => {
-    const { html } = buildQuotationHtmlFragment(includeDesign);
+  const generatePdf = async (includeDesign, applyRetention) => {
+    const { html } = buildQuotationHtmlFragment(includeDesign, applyRetention);
     const wrapper = document.createElement('div');
     wrapper.style.position = 'fixed';
     wrapper.style.left = '-9999px';
@@ -132,15 +148,28 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
       </button>
 
       <div className={`pdf-panel ${showOptions ? 'visible' : ''}`}>
-        <label className="pdf-panel-option">
-          <input
-            type="checkbox"
-            className="checkbox-block"
-            checked={includesDesign}
-            onChange={(e) => setIncludesDesign(e.target.checked)}
-          />
-          <span>Incluye diseño (+ ${config.designFee ?? 5000} CLP)</span>
-        </label>
+        <div className="pdf-panel-option">
+          <label className="pdf-panel-option">
+            <input
+              type="checkbox"
+              className="checkbox-block"
+              checked={includesDesign}
+              onChange={(e) => setIncludesDesign(e.target.checked)}
+            />
+            <span>Incluye diseño (+ ${config.designFee ?? 5000} CLP)</span>
+          </label>
+        </div>
+        <div className="pdf-panel-option">
+          <label className="pdf-panel-option">
+            <input
+              type="checkbox"
+              className="checkbox-block"
+              checked={includeRetention}
+              onChange={(e) => setIncludeRetention(e.target.checked)}
+            />
+            <span>Aplicar retención 15,25% (Boleta de Honorarios)</span>
+          </label>
+        </div>
         <div className="pdf-panel-actions">
           <button className="btn-white" onClick={() => setShowOptions(false)}>
             Cancelar
@@ -149,7 +178,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
             className="btn-orange"
             onClick={() => {
               setShowOptions(false);
-              generatePdf(includesDesign);
+              generatePdf(includesDesign, includeRetention);
             }}
           >
             Descargar PDF

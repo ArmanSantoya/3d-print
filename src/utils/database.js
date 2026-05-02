@@ -1,0 +1,209 @@
+import { supabase } from '../supabase.js'
+
+// Materials operations
+export const materialsApi = {
+  // Get all materials
+  async getAll() {
+    const { data, error } = await supabase
+      .from('materials')
+      .select('*')
+      .order('type', { ascending: true })
+
+    if (error) throw error
+    return data
+  },
+
+  // Add new material
+  async create(material) {
+    const { data, error } = await supabase
+      .from('materials')
+      .insert([material])
+      .select()
+
+    if (error) throw error
+    return data[0]
+  },
+
+  // Update material
+  async update(id, updates) {
+    const { data, error } = await supabase
+      .from('materials')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+
+    if (error) throw error
+    return data[0]
+  },
+
+  // Delete material
+  async delete(id) {
+    const { error } = await supabase
+      .from('materials')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+  },
+
+  // Update material quantity (for inventory management)
+  async updateQuantity(id, quantityUsed) {
+    const { data, error } = await supabase
+      .from('materials')
+      .select('quantity_kg')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+
+    const newQuantity = Math.max(0, data.quantity_kg - quantityUsed)
+
+    return this.update(id, { quantity_kg: newQuantity })
+  }
+}
+
+// Projects operations
+export const projectsApi = {
+  // Get all projects
+  async getAll() {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  // Get project with details
+  async getWithDetails(id) {
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (projectError) throw projectError
+
+    const { data: details, error: detailsError } = await supabase
+      .from('project_details')
+      .select('*')
+      .eq('project_id', id)
+      .order('created_at', { ascending: true })
+
+    if (detailsError) throw detailsError
+
+    return { ...project, details }
+  },
+
+  // Create new project
+  async create(projectData) {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert([projectData])
+      .select()
+
+    if (error) throw error
+    return data[0]
+  },
+
+  // Update project
+  async update(id, updates) {
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+
+    if (error) throw error
+    return data[0]
+  },
+
+  // Delete project
+  async delete(id) {
+    // First delete project details
+    const { error: detailsError } = await supabase
+      .from('project_details')
+      .delete()
+      .eq('project_id', id)
+
+    if (detailsError) throw detailsError
+
+    // Then delete project
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+  },
+
+  // Save project with details (for saving calculator results)
+  async saveWithDetails(projectData, details) {
+    // Start transaction-like operation
+    const project = await this.create(projectData)
+
+    const detailsWithProjectId = details.map(detail => ({
+      ...detail,
+      project_id: project.id
+    }))
+
+    const { data: savedDetails, error: detailsError } = await supabase
+      .from('project_details')
+      .insert(detailsWithProjectId)
+      .select()
+
+    if (detailsError) throw detailsError
+
+    return { ...project, details: savedDetails }
+  },
+
+  // Mark project as paid and deduct materials
+  async markAsPaid(id) {
+    const project = await this.getWithDetails(id)
+
+    // Deduct materials from inventory
+    for (const detail of project.details) {
+      const material = await materialsApi.getAll()
+        .then(materials => materials.find(m => m.type === detail.material))
+
+      if (material) {
+        await materialsApi.updateQuantity(material.id, detail.weight_g / 1000) // Convert g to kg
+      }
+    }
+
+    // Update project status
+    return this.update(id, {
+      status: 'paid',
+      paid_at: new Date().toISOString()
+    })
+  }
+}
+
+// Utility functions
+export const dbUtils = {
+  // Calculate total cost for a project
+  calculateProjectTotals(details) {
+    return details.reduce((totals, detail) => ({
+      weight_total_g: totals.weight_total_g + detail.weight_g,
+      time_total_hours: totals.time_total_hours + detail.time_hours,
+      material_used_g: totals.material_used_g + detail.weight_g,
+      total_cost: totals.total_cost + detail.cost
+    }), {
+      weight_total_g: 0,
+      time_total_hours: 0,
+      material_used_g: 0,
+      total_cost: 0
+    })
+  },
+
+  // Get material cost per gram
+  async getMaterialCostPerGram(materialType) {
+    const materials = await materialsApi.getAll()
+    const material = materials.find(m => m.type === materialType)
+
+    if (!material) return 0
+
+    return material.cost_per_kg / 1000 // Convert kg to g
+  }
+}

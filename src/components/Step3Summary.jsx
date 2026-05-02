@@ -1,7 +1,61 @@
+import { useState } from 'react';
 import PdfGenerator from './PdfGenerator';
 import { calculateTrayDetails, roundTo50 } from '../utils/costCalculator';
+import { projectsApi } from '../utils/database';
 
 export default function Step3Summary({ trayData = [], config = {}, projectName = '', prevStep, resetAndCreateNew }) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+
+  const handleSaveProject = async () => {
+    if (!projectName.trim()) {
+      setSaveMessage('⚠️ Por favor ingresa un nombre para el proyecto');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveMessage('');
+
+    try {
+      const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
+      const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
+      const totalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray, config).subtotal, 0);
+
+      const marginPercent = Number(config.margin) || 0;
+      const subtotalWithMargin = totalGeneral * (1 + marginPercent / 100);
+      const retentionRate = Number(config.retentionRate) || 0.1525;
+      const brutoAmount = subtotalWithMargin / (1 - retentionRate);
+
+      const projectData = {
+        name: projectName,
+        status: 'draft',
+        weight_total_g: totalWeight,
+        time_total_hours: totalTime,
+        material_used_g: totalWeight,
+        total_cost: Math.round(brutoAmount)
+      };
+
+      const details = trayData.map((tray, i) => {
+        const { subtotal } = calculateTrayDetails(tray, config);
+        return {
+          tray_name: tray.name || `Bandeja ${i + 1}`,
+          weight_g: Number(tray.weight) || 0,
+          time_hours: Number(tray.time) || 0,
+          material: tray.material,
+          printer: tray.printer,
+          cost: Math.round(subtotal)
+        };
+      });
+
+      await projectsApi.saveWithDetails(projectData, details);
+      setSaveMessage('✅ Proyecto guardado exitosamente');
+    } catch (error) {
+      console.error('Error saving project:', error);
+      setSaveMessage('❌ Error al guardar el proyecto');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const formatTotalTime = (hoursDecimal) => {
     let totalMinutes = Math.round((Number(hoursDecimal) || 0) * 60);
     const days = Math.floor(totalMinutes / (24 * 60));
@@ -87,8 +141,21 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
       <div className="button-group" style={{ marginTop: '1rem' }}>
         <button className="btn-white" onClick={prevStep}>Volver</button>
         <button className="btn-dark" onClick={resetAndCreateNew}>Crear nueva cotización</button>
+        <button 
+          className="btn-dark" 
+          onClick={handleSaveProject}
+          disabled={isSaving}
+          style={{ backgroundColor: '#4CAF50', cursor: isSaving ? 'not-allowed' : 'pointer' }}
+        >
+          {isSaving ? '💾 Guardando...' : '💾 Guardar Proyecto'}
+        </button>
         <PdfGenerator trayData={trayData} config={config} projectName={projectName} />
       </div>
+      {saveMessage && (
+        <p style={{ marginTop: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
+          {saveMessage}
+        </p>
+      )}
     </div>
   );
 }

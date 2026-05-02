@@ -1,0 +1,121 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.login-box {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.login-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.login-header h1 {
+  font-size: 28px;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.login-header p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.login-content {
+  padding: 40px 30px;
+}
+
+.login-content h2 {
+  font-size: 18px;
+  margin: 0 0 30px 0;
+  color: #333;
+  text-align: center;
+}
+
+.google-signin-button {
+  width: 100%;
+  padding: 12px 20px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.google-signin-button:hover:not(:disabled) {
+  border-color: #667eea;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.google-signin-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.google-signin-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #667eea;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-error {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.login-footer {
+  background: #f8f9fa;
+  padding: 20px 30px;
+  text-align: center;
+  border-top: 1px solid #e0e0e0;
+}
+
+.login-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
