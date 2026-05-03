@@ -16,7 +16,7 @@ export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, p
     <div>
       <h2 className="step-title">
         <MdCreateNewFolder size={28} />
-        Información del Proyecto
+        Crear nuevo Proyecto
       </h2>
 
       <div className="form-row full">

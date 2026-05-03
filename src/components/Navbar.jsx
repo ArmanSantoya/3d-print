@@ -7,13 +7,11 @@ export default function Navbar({ onOpenSidebar }) {
   const {  logout, getUserName } = useAuth()
   const navigate = useNavigate()
 
+  // logout() ya redirige a /login y limpia storage incluso si la sesión
+  // estaba perdida o Supabase devolvió error. Por tanto, no lanzará excepciones
+  // ni necesitamos un fallback extra acá.
   const handleLogout = async () => {
-    try {
-      await logout()
-      navigate('/login')
-    } catch (error) {
-      console.error('Error logging out:', error)
-    }
+    await logout()
   }
 
   const handleNewQuote = () => {
