@@ -68,7 +68,7 @@
 }
 
 .login-logo {
-  width: 100px;
+  width: 300px;
   height: 100px;
   margin: 0 auto 20px;
   border-radius: 0;
@@ -288,6 +288,7 @@
   transition: all 0.25s ease;
   font-family: inherit;
   background: #fafafa;
+  width: 92%;
 }
 
 .login-form input:focus {
