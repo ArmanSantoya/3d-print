@@ -68,16 +68,19 @@ export default function Login() {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Contraseña</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={loading}
-              />
+            <div className="password-field-row">
+              <div className="form-group">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  disabled={loading}
+                />
+              </div>
+              <a href="#forgot" className="forgot-password-link">¿Olvidaste?</a>
             </div>
 
             <button
