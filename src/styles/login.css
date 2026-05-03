@@ -68,7 +68,7 @@
 }
 
 .login-logo {
-  width: 300px;
+  width: 100px;
   height: 100px;
   margin: 0 auto 20px;
   border-radius: 0;
@@ -281,13 +281,13 @@
 }
 
 .login-form input {
-    padding-right: 0px;
-    border: 1.5px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 14px;
-    transition: all 0.25s ease;
-    font-family: inherit;
-    background: #fafafa;
+  padding: 14px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  background: #fafafa;
 }
 
 .login-form input:focus {
