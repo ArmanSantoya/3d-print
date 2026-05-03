@@ -240,7 +240,7 @@ export const usersApi = {
       throw new Error('User data must include id and email')
     }
 
-    const { data: existing, error: selectError } = await supabase
+    const { data: existing } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('id', userData.id)
