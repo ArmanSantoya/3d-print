@@ -225,35 +225,55 @@ export const usersApi = {
   // Check if user is authorized for dashboard access
   async checkDashboardAccess(email) {
     try {
-      const { data, error } = await supabase
-        .from('authorized_users')
-        .select('has_dashboard_access')
-        .eq('email', email.toLowerCase())
-        .single()
-
-      // Handle various error codes gracefully
-      if (error) {
-        // PGRST116 = not found, 406 = not acceptable (table access issue)
-        if (error.code === 'PGRST116' || error.code === '406' || error.status === 406) {
-          console.warn('Cannot access authorized_users table, checking user_profiles instead:', error.message)
-          return false
-        }
-        throw error
-      }
-      return data?.has_dashboard_access || false
-    } catch (err) {
-      console.error('Error checking dashboard access:', err)
-      // Fallback to checking user_profiles directly
+      const lowerEmail = email.toLowerCase()
+      
+      // Try user_profiles first (primary source)
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('user_profiles')
           .select('has_dashboard_access')
-          .eq('email', email.toLowerCase())
+          .eq('email', lowerEmail)
           .single()
+
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // Not found in user_profiles, try authorized_users
+            console.log('User not in user_profiles, checking authorized_users')
+            throw new Error('user_profiles_not_found')
+          }
+          throw error
+        }
+        
+        console.log('✅ Found in user_profiles, access:', data?.has_dashboard_access)
         return data?.has_dashboard_access || false
-      } catch {
-        return false
+      } catch (err) {
+        if (err.message === 'user_profiles_not_found') {
+          // Fallback to authorized_users
+          try {
+            const { data, error } = await supabase
+              .from('authorized_users')
+              .select('has_dashboard_access')
+              .eq('email', lowerEmail)
+              .single()
+
+            if (error && error.code === 'PGRST116') {
+              console.warn('User not found in either table')
+              return false
+            }
+            if (error) throw error
+            
+            console.log('✅ Found in authorized_users, access:', data?.has_dashboard_access)
+            return data?.has_dashboard_access || false
+          } catch (fallbackErr) {
+            console.warn('Fallback to authorized_users failed:', fallbackErr.message)
+            return false
+          }
+        }
+        throw err
       }
+    } catch (err) {
+      console.error('❌ Error checking dashboard access:', err.message)
+      return false
     }
   },
 
@@ -271,8 +291,25 @@ export const usersApi = {
 
     if (existing) return existing
 
-    // Check if email is in authorized_users
-    const hasAccess = await this.checkDashboardAccess(userData.email)
+    // Determine if user should have dashboard access
+    // Super admins always get access
+    let hasAccess = false
+    
+    try {
+      const { data: superAdminCheck } = await supabase
+        .from('user_profiles')
+        .select('is_super_admin')
+        .eq('id', userData.id)
+        .single()
+      
+      if (superAdminCheck?.is_super_admin) {
+        hasAccess = true
+        console.log('✅ User is super admin, granting dashboard access')
+      }
+    } catch {
+      // Profile doesn't exist yet, check authorized tables
+      hasAccess = await this.checkDashboardAccess(userData.email)
+    }
 
     // Create new profile
     const { data: profile, error: insertError } = await supabase
