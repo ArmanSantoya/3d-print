@@ -31,25 +31,27 @@ export function AuthProvider({ children }) {
       }
     }
 
-    checkUser()
+    // Set a 5-second timeout for initial load - if it takes longer, just proceed
+    const timeoutId = setTimeout(() => {
+      setLoading(false)
+      setLoadingAccess(false)
+    }, 5000)
 
-    // Listen for auth changes
+    checkUser().finally(() => clearTimeout(timeoutId))
+
+    // Listen for auth changes - simpler approach, don't filter events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Only handle specific events to avoid unnecessary state changes
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
-          console.log('🔐 Auth state changed:', event)
-          const userData = session?.user || null
-          setUser(userData)
-          
-          if (userData) {
-            await checkUserAccess(userData)
-          } else {
-            setHasAccess(false)
-            setIsSuperAdmin(false)
-          }
+        console.log('🔐 Auth event:', event)
+        const userData = session?.user || null
+        setUser(userData)
+        
+        if (userData) {
+          await checkUserAccess(userData)
         } else {
-          console.log('🔐 Auth event ignored:', event)
+          setHasAccess(false)
+          setIsSuperAdmin(false)
+          setLoadingAccess(false)
         }
       }
     )
@@ -60,9 +62,9 @@ export function AuthProvider({ children }) {
   }, [])
 
   const checkUserAccess = async (userData) => {
+    setLoadingAccess(true)
     try {
       console.log('🔍 Checking user access for:', userData?.email)
-      setLoadingAccess(true)
       
       // Get or create user profile
       await usersApi.getOrCreateProfile(userData)
