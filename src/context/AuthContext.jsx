@@ -36,14 +36,20 @@ export function AuthProvider({ children }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const userData = session?.user || null
-        setUser(userData)
-        
-        if (userData) {
-          await checkUserAccess(userData)
+        // Only handle specific events to avoid unnecessary state changes
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+          console.log('🔐 Auth state changed:', event)
+          const userData = session?.user || null
+          setUser(userData)
+          
+          if (userData) {
+            await checkUserAccess(userData)
+          } else {
+            setHasAccess(false)
+            setIsSuperAdmin(false)
+          }
         } else {
-          setHasAccess(false)
-          setIsSuperAdmin(false)
+          console.log('🔐 Auth event ignored:', event)
         }
       }
     )
@@ -55,6 +61,7 @@ export function AuthProvider({ children }) {
 
   const checkUserAccess = async (userData) => {
     try {
+      console.log('🔍 Checking user access for:', userData?.email)
       setLoadingAccess(true)
       
       // Get or create user profile
@@ -62,13 +69,15 @@ export function AuthProvider({ children }) {
       
       // Check dashboard access
       const hasAccess = await usersApi.checkDashboardAccess(userData.email)
+      console.log('✅ Dashboard access:', hasAccess)
       setHasAccess(hasAccess)
 
       // Check if super admin
       const isSuperAdmin = await usersApi.checkIfSuperAdmin(userData.id)
+      console.log('✅ Super admin status:', isSuperAdmin)
       setIsSuperAdmin(isSuperAdmin)
     } catch (error) {
-      console.error('Error checking user access:', error)
+      console.error('❌ Error checking user access:', error)
       setHasAccess(false)
       setIsSuperAdmin(false)
     } finally {

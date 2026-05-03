@@ -224,14 +224,37 @@ export const dbUtils = {
 export const usersApi = {
   // Check if user is authorized for dashboard access
   async checkDashboardAccess(email) {
-    const { data, error } = await supabase
-      .from('authorized_users')
-      .select('has_dashboard_access')
-      .eq('email', email.toLowerCase())
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('authorized_users')
+        .select('has_dashboard_access')
+        .eq('email', email.toLowerCase())
+        .single()
 
-    if (error && error.code !== 'PGRST116') throw error // PGRST116 = not found
-    return data?.has_dashboard_access || false
+      // Handle various error codes gracefully
+      if (error) {
+        // PGRST116 = not found, 406 = not acceptable (table access issue)
+        if (error.code === 'PGRST116' || error.code === '406' || error.status === 406) {
+          console.warn('Cannot access authorized_users table, checking user_profiles instead:', error.message)
+          return false
+        }
+        throw error
+      }
+      return data?.has_dashboard_access || false
+    } catch (err) {
+      console.error('Error checking dashboard access:', err)
+      // Fallback to checking user_profiles directly
+      try {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('has_dashboard_access')
+          .eq('email', email.toLowerCase())
+          .single()
+        return data?.has_dashboard_access || false
+      } catch {
+        return false
+      }
+    }
   },
 
   // Get or create user profile

@@ -65,6 +65,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu.email@ejemplo.com"
                 disabled={loading}
+                autoComplete="email"
               />
             </div>
 
@@ -78,6 +79,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={loading}
+                  autoComplete="current-password"
                 />
               </div>
               <a href="#forgot" className="forgot-password-link">¿Olvidaste?</a>
