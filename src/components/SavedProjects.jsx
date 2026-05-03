@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { projectsApi } from '../utils/database';
+import '../styles/savedProjects.css';
 
 export default function SavedProjects() {
   const [projects, setProjects] = useState([]);
@@ -78,54 +79,44 @@ export default function SavedProjects() {
   };
 
   if (loading) {
-    return <div className="container"><p>Cargando proyectos...</p></div>;
+    return <div className="saved-projects-container"><p className="loading-text">Cargando proyectos...</p></div>;
   }
 
   return (
-    <div className="container">
-      <h2>Proyectos Guardados</h2>
+    <div className="saved-projects-container">
+      <div className="saved-projects-header">
+        <h2>Proyectos Guardados</h2>
+      </div>
 
-      {error && <p style={{ color: '#d32f2f', marginBottom: '1rem' }}>❌ {error}</p>}
+      {error && <p className="projects-error">❌ {error}</p>}
 
       {projects.length === 0 ? (
-        <p style={{ textAlign: 'center', color: '#666' }}>No hay proyectos guardados aún.</p>
+        <p className="projects-empty">No hay proyectos guardados aún.</p>
       ) : (
-        <div style={{ display: 'flex', gap: '2rem' }}>
-          <div style={{ flex: 1 }}>
+        <div className="projects-layout">
+          <div className="projects-list-section">
             <h3>Lista de Proyectos ({projects.length})</h3>
-            <div style={{ 
-              border: '1px solid #ddd', 
-              borderRadius: '8px', 
-              maxHeight: '600px', 
-              overflowY: 'auto' 
-            }}>
+            <div className="projects-list">
               {projects.map(project => (
                 <div
                   key={project.id}
+                  className={`project-item ${selectedProject?.id === project.id ? 'selected' : ''}`}
                   onClick={() => handleProjectClick(project.id)}
-                  style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #ddd',
-                    cursor: 'pointer',
-                    backgroundColor: selectedProject?.id === project.id ? '#f0f0f0' : 'white',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedProject?.id === project.id ? '#f0f0f0' : 'white'}
                 >
-                  <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    {project.name}
-                  </div>
-                  <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                    <p style={{ margin: '0.25rem 0' }}>
-                      <strong>Estado:</strong> {getStatusBadge(project.status)}
-                    </p>
-                    <p style={{ margin: '0.25rem 0' }}>
-                      <strong>Costo:</strong> ${project.total_cost.toLocaleString('es-CL')} CLP
-                    </p>
-                    <p style={{ margin: '0.25rem 0' }}>
-                      <strong>Creado:</strong> {formatDate(project.created_at)}
-                    </p>
+                  <div className="project-item-name">{project.name}</div>
+                  <div className="project-item-info">
+                    <div className="project-item-row">
+                      <strong>Estado:</strong>
+                      <span>{getStatusBadge(project.status)}</span>
+                    </div>
+                    <div className="project-item-row">
+                      <strong>Costo:</strong>
+                      <span>${project.total_cost.toLocaleString('es-CL')}</span>
+                    </div>
+                    <div className="project-item-row">
+                      <strong>Creado:</strong>
+                      <span>{formatDate(project.created_at)}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -133,85 +124,81 @@ export default function SavedProjects() {
           </div>
 
           {selectedProject && (
-            <div style={{ flex: 1 }}>
+            <div className="project-details-section">
               <h3>Detalles del Proyecto</h3>
-              <div style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem' }}>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <p style={{ margin: '0.5rem 0' }}>
-                    <strong>Nombre:</strong> {selectedProject.name}
-                  </p>
-                  <p style={{ margin: '0.5rem 0' }}>
-                    <strong>Estado:</strong> {getStatusBadge(selectedProject.status)}
-                  </p>
-                  <p style={{ margin: '0.5rem 0' }}>
-                    <strong>Peso Total:</strong> {selectedProject.weight_total_g} g
-                  </p>
-                  <p style={{ margin: '0.5rem 0' }}>
-                    <strong>Tiempo Total:</strong> {selectedProject.time_total_hours.toFixed(2)} h
-                  </p>
-                  <p style={{ margin: '0.5rem 0' }}>
-                    <strong>Costo Total:</strong> ${selectedProject.total_cost.toLocaleString('es-CL')} CLP
-                  </p>
-                  <p style={{ margin: '0.5rem 0' }}>
-                    <strong>Creado:</strong> {formatDate(selectedProject.created_at)}
-                  </p>
-                  {selectedProject.paid_at && (
-                    <p style={{ margin: '0.5rem 0' }}>
-                      <strong>Pagado:</strong> {formatDate(selectedProject.paid_at)}
-                    </p>
-                  )}
+              <div className="project-details-card">
+                <div className="project-details-header">
+                  <div className="project-detail-item">
+                    <span className="project-detail-label">Nombre:</span>
+                    <span className="project-detail-value">{selectedProject.name}</span>
+                  </div>
+                  <div className="project-detail-item">
+                    <span className="project-detail-label">Estado:</span>
+                    <span className="project-detail-value">{getStatusBadge(selectedProject.status)}</span>
+                  </div>
                 </div>
 
+                <div className="project-detail-item">
+                  <span className="project-detail-label">Peso Total:</span>
+                  <span className="project-detail-value">{selectedProject.weight_total_g} g</span>
+                </div>
+                <div className="project-detail-item">
+                  <span className="project-detail-label">Tiempo Total:</span>
+                  <span className="project-detail-value">{selectedProject.time_total_hours.toFixed(2)} h</span>
+                </div>
+                <div className="project-detail-item">
+                  <span className="project-detail-label">Costo Total:</span>
+                  <span className="project-detail-value">${selectedProject.total_cost.toLocaleString('es-CL')} CLP</span>
+                </div>
+                <div className="project-detail-item">
+                  <span className="project-detail-label">Creado:</span>
+                  <span className="project-detail-value">{formatDate(selectedProject.created_at)}</span>
+                </div>
+                {selectedProject.paid_at && (
+                  <div className="project-detail-item">
+                    <span className="project-detail-label">Pagado:</span>
+                    <span className="project-detail-value">{formatDate(selectedProject.paid_at)}</span>
+                  </div>
+                )}
+
                 <h4>Detalles de Bandejas</h4>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <table className="details-table">
                   <thead>
-                    <tr style={{ backgroundColor: '#f5f5f5' }}>
-                      <th style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'left' }}>Bandeja</th>
-                      <th style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'right' }}>Peso</th>
-                      <th style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'right' }}>Tiempo</th>
-                      <th style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'left' }}>Material</th>
-                      <th style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'right' }}>Costo</th>
+                    <tr>
+                      <th>Bandeja</th>
+                      <th className="table-header-right">Peso</th>
+                      <th className="table-header-right">Tiempo</th>
+                      <th>Material</th>
+                      <th className="table-header-right">Costo</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedProject.details?.map((detail, i) => (
                       <tr key={i}>
-                        <td style={{ border: '1px solid #ddd', padding: '0.5rem' }}>
-                          {detail.tray_name}
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'right' }}>
-                          {detail.weight_g} g
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'right' }}>
-                          {detail.time_hours.toFixed(2)} h
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '0.5rem' }}>
-                          {detail.material}
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'right' }}>
-                          ${detail.cost.toLocaleString('es-CL')}
-                        </td>
+                        <td>{detail.tray_name}</td>
+                        <td className="table-data-right">{detail.weight_g} g</td>
+                        <td className="table-data-right">{detail.time_hours.toFixed(2)} h</td>
+                        <td>{detail.material}</td>
+                        <td className="table-data-right">${detail.cost.toLocaleString('es-CL')}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
 
-                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div className="project-actions">
                   {selectedProject.status !== 'paid' && (
                     <button
-                      className="btn-dark"
+                      className="btn btn-primary"
                       onClick={() => handleMarkAsPaid(selectedProject.id)}
-                      style={{ backgroundColor: '#4CAF50' }}
                     >
                       ✅ Marcar como Pagado
                     </button>
                   )}
                   <button
-                    className="btn-dark"
+                    className="btn btn-danger"
                     onClick={() => handleDeleteProject(selectedProject.id)}
-                    style={{ backgroundColor: '#f44336' }}
                   >
-                    🗑️ Eliminar
+                    🗑️ Eliminar Proyecto
                   </button>
                 </div>
               </div>
@@ -219,12 +206,6 @@ export default function SavedProjects() {
           )}
         </div>
       )}
-
-      <div style={{ marginTop: '2rem' }}>
-        <button className="btn-white" onClick={() => window.history.back()}>
-          Volver
-        </button>
-      </div>
     </div>
   );
 }
