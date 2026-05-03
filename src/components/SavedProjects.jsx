@@ -78,6 +78,21 @@ export default function SavedProjects() {
     return new Date(dateString).toLocaleDateString('es-CL');
   };
 
+  const formatTimeTotal = (hours) => {
+    const totalMinutes = Math.round(hours * 60);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const remainingMinutes = totalMinutes % (24 * 60);
+    const hoursRemaining = Math.floor(remainingMinutes / 60);
+    const minutes = remainingMinutes % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hoursRemaining > 0) parts.push(`${hoursRemaining}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+
+    return parts.length > 0 ? parts.join(' ') : '0m';
+  };
+
   if (loading) {
     return <div className="saved-projects-container"><p className="loading-text">Cargando proyectos...</p></div>;
   }
@@ -144,7 +159,7 @@ export default function SavedProjects() {
                 </div>
                 <div className="project-detail-item">
                   <span className="project-detail-label">Tiempo Total:</span>
-                  <span className="project-detail-value">{selectedProject.time_total_hours.toFixed(2)} h</span>
+                  <span className="project-detail-value">{formatTimeTotal(selectedProject.time_total_hours)}</span>
                 </div>
                 <div className="project-detail-item">
                   <span className="project-detail-label">Costo Total:</span>
