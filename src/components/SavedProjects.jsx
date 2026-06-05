@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { projectsApi } from '../utils/database';
 import { useConfig } from '../hooks/useConfig';
 import { useAsync } from '../hooks/useAsync';
@@ -8,6 +9,7 @@ export default function SavedProjects() {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [config] = useConfig();
+  const navigate = useNavigate();
   const { loading, error, execute } = useAsync({ initialLoading: true });
 
   useEffect(() => {
@@ -219,6 +221,12 @@ export default function SavedProjects() {
                 </table>
 
                 <div className="project-actions">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => navigate(`/project/${selectedProject.id}`)}
+                  >
+                    🔍 Ver Detalle
+                  </button>
                   {selectedProject.status !== 'paid' && (
                     <button
                       className="btn btn-primary"

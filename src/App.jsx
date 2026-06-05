@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Settings from './components/Settings';
 import MultiStepForm from './components/MultiStepForm';
 import SavedProjects from './components/SavedProjects';
+import ProjectDetail from './components/ProjectDetail';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import AdminUsers from './components/AdminUsers';
@@ -95,6 +96,21 @@ export default function App() {
             } 
           />
           
+          {/* Project Detail Route - Require dashboard access */}
+          <Route
+            path="/project/:id"
+            element={
+              <ProtectedRoute
+                requiresDashboardAccess={true}
+                element={
+                  <DashboardLayout>
+                    <ProjectDetail />
+                  </DashboardLayout>
+                }
+              />
+            }
+          />
+
           {/* Redirect old paths */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

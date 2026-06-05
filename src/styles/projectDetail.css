@@ -1,0 +1,239 @@
+/* Project Detail Page */
+
+.project-detail-page {
+  color: #fff;
+}
+
+.project-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #f57c00;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  transition: opacity 0.2s;
+}
+
+.project-detail-back:hover {
+  opacity: 0.75;
+}
+
+.project-detail-title-banner {
+  background: rgba(245, 124, 0, 0.07);
+  border-left: 4px solid #f57c00;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.project-detail-title-banner h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.project-detail-status-badge {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(245, 124, 0, 0.15);
+  color: #f57c00;
+  border: 1px solid rgba(245, 124, 0, 0.3);
+}
+
+/* Tray table */
+.project-detail-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.2px;
+}
+
+.project-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 2rem;
+}
+
+.project-detail-table thead {
+  background: rgba(245, 124, 0, 0.1);
+}
+
+.project-detail-table th {
+  border: 1px solid rgba(245, 124, 0, 0.2);
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 700;
+  color: #f57c00;
+  white-space: nowrap;
+}
+
+.project-detail-table th.right,
+.project-detail-table td.right {
+  text-align: right;
+}
+
+.project-detail-table td {
+  border: 1px solid rgba(245, 124, 0, 0.1);
+  padding: 0.75rem;
+  color: #ccc;
+}
+
+.project-detail-table td.highlight {
+  color: #fff;
+  font-weight: 600;
+}
+
+.project-detail-table tbody tr:hover {
+  background: rgba(245, 124, 0, 0.05);
+}
+
+.project-detail-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Totals grid */
+.project-detail-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.project-detail-total-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(245, 124, 0, 0.15);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.project-detail-total-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+}
+
+.project-detail-total-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Final block */
+.project-detail-final-block {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid #f57c00;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.project-detail-final-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.3rem 0;
+}
+
+.project-detail-final-amount {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin: 0 0 1.5rem 0;
+}
+
+.project-detail-bruto-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.3rem 0;
+}
+
+.project-detail-bruto-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f57c00;
+  margin: 0;
+}
+
+/* Meta info */
+.project-detail-meta {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  font-size: 13px;
+  color: #aaa;
+}
+
+.project-detail-meta-item {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.project-detail-meta-item strong {
+  color: #f57c00;
+}
+
+/* Actions */
+.project-detail-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(245, 124, 0, 0.1);
+}
+
+/* Loading / error states */
+.project-detail-loading {
+  color: #aaa;
+  padding: 2rem;
+  font-size: 16px;
+}
+
+.project-detail-error {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1.5px solid rgba(220, 53, 69, 0.3);
+  border-radius: 8px;
+  color: #ff6b6b;
+  padding: 1rem 1.25rem;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .project-detail-table {
+    font-size: 11px;
+  }
+
+  .project-detail-table th,
+  .project-detail-table td {
+    padding: 0.5rem 0.4rem;
+  }
+
+  .project-detail-bruto-value {
+    font-size: 1.5rem;
+  }
+}
