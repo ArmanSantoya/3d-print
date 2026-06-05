@@ -98,6 +98,14 @@
   font-weight: 600;
 }
 
+.project-detail-table-sub {
+  display: block;
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
 .project-detail-table tbody tr:hover {
   background: rgba(245, 124, 0, 0.05);
 }

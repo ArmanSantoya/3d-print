@@ -150,27 +150,45 @@ export default function ProjectDetail() {
               <th className="right">Peso</th>
               <th className="right">Tiempo</th>
               <th>Material</th>
+              <th className="right">Costo Filamento</th>
               <th>Impresora</th>
+              <th className="right">Costo Máquina</th>
               <th className="right">Electricidad</th>
               <th className="right">Precio Bandeja</th>
             </tr>
           </thead>
           <tbody>
-            {details.map((d, i) => (
-              <tr key={i}>
-                <td>{d.tray_name}</td>
-                <td className="right">{d.weight_g} g</td>
-                <td className="right">{formatTime(d.time_hours)}</td>
-                <td>{d.material}</td>
-                <td>{d.printer || '—'}</td>
-                <td className="right">
-                  {d.electricity_cost != null
-                    ? `$${Math.round(d.electricity_cost).toLocaleString('es-CL')}`
-                    : '—'}
-                </td>
-                <td className="right highlight">${d.cost.toLocaleString('es-CL')}</td>
-              </tr>
-            ))}
+            {details.map((d, i) => {
+              const materialPricePerKg = config.materials?.[d.material] || 0
+              const materialCost = Math.round(d.weight_g * (materialPricePerKg / 1000))
+              const machineCostPerHour = Number(config.printers?.[d.printer]?.machineCostPerHour) || Number(config.machineCostPerHour) || 0
+              const machineCost = Math.round(d.time_hours * machineCostPerHour)
+              return (
+                <tr key={i}>
+                  <td>{d.tray_name}</td>
+                  <td className="right">{d.weight_g} g</td>
+                  <td className="right">{formatTime(d.time_hours)}</td>
+                  <td>{d.material}</td>
+                  <td className="right">
+                    ${materialCost.toLocaleString('es-CL')}
+                    <span className="project-detail-table-sub">${materialPricePerKg.toLocaleString('es-CL')}/kg</span>
+                  </td>
+                  <td>{d.printer || '—'}</td>
+                  <td className="right">
+                    ${machineCost.toLocaleString('es-CL')}
+                    {machineCostPerHour > 0 && (
+                      <span className="project-detail-table-sub">${machineCostPerHour.toLocaleString('es-CL')}/h</span>
+                    )}
+                  </td>
+                  <td className="right">
+                    {d.electricity_cost != null
+                      ? `$${Math.round(d.electricity_cost).toLocaleString('es-CL')}`
+                      : '—'}
+                  </td>
+                  <td className="right highlight">${d.cost.toLocaleString('es-CL')}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
