@@ -4,6 +4,7 @@ import { MdArrowBack, MdCheckCircle, MdDelete } from 'react-icons/md'
 import { projectsApi } from '../utils/database'
 import { useAsync } from '../hooks/useAsync'
 import { useConfig } from '../hooks/useConfig'
+import PdfGenerator from './PdfGenerator'
 import '../styles/savedProjects.css'
 import '../styles/projectDetail.css'
 
@@ -101,6 +102,18 @@ export default function ProjectDetail() {
   const liquidCost = getLiquidCost(project)
   const retentionAmount = project.total_cost - liquidCost
   const totalElectricity = getTotalElectricity(details)
+  const costoBase = details.reduce((sum, d) => sum + (d.cost || 0), 0)
+  const ganancia = liquidCost - costoBase
+  const gananciaPercent = costoBase > 0 ? Math.round((ganancia / costoBase) * 100) : 0
+
+  // trayData compatible con PdfGenerator
+  const trayDataForPdf = details.map(d => ({
+    name: d.tray_name,
+    weight: d.weight_g,
+    time: d.time_hours,
+    material: d.material,
+    printer: d.printer,
+  }))
 
   return (
     <div className="project-detail-page">
@@ -178,6 +191,14 @@ export default function ProjectDetail() {
           <div className="project-detail-total-value">${totalElectricity.toLocaleString('es-CL')}</div>
         </div>
         <div className="project-detail-total-card">
+          <div className="project-detail-total-label">Costo Base</div>
+          <div className="project-detail-total-value">${costoBase.toLocaleString('es-CL')}</div>
+        </div>
+        <div className="project-detail-total-card project-detail-total-card--profit">
+          <div className="project-detail-total-label">Ganancia ({gananciaPercent}%)</div>
+          <div className="project-detail-total-value">${ganancia.toLocaleString('es-CL')}</div>
+        </div>
+        <div className="project-detail-total-card">
           <div className="project-detail-total-label">Costo Líquido</div>
           <div className="project-detail-total-value">${liquidCost.toLocaleString('es-CL')}</div>
         </div>
@@ -207,6 +228,7 @@ export default function ProjectDetail() {
             <MdCheckCircle size={16} /> Marcar como Pagado
           </button>
         )}
+        <PdfGenerator trayData={trayDataForPdf} config={config} projectName={project.name} />
         <button className="btn btn-danger" onClick={handleDelete}>
           <MdDelete size={16} /> Eliminar Proyecto
         </button>

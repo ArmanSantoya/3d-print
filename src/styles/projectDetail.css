@@ -137,6 +137,19 @@
   color: #fff;
 }
 
+.project-detail-total-card--profit {
+  border-color: rgba(76, 175, 80, 0.35);
+  background: rgba(76, 175, 80, 0.07);
+}
+
+.project-detail-total-card--profit .project-detail-total-label {
+  color: #81c784;
+}
+
+.project-detail-total-card--profit .project-detail-total-value {
+  color: #81c784;
+}
+
 /* Final block */
 .project-detail-final-block {
   background: rgba(255, 255, 255, 0.03);
