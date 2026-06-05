@@ -52,6 +52,9 @@ src/
     PdfGenerator.jsx         # generación de cotización PDF
     Settings.jsx             # configuración de precios (persiste en localStorage)
     AdminUsers.jsx           # gestión de usuarios (solo super admin)
+    ProjectDetail.jsx        # vista de detalle de proyecto guardado (/project/:id)
+    Home.jsx                 # dashboard home — lista últimos 5 proyectos, navega a /project/:id
+    SavedProjects.jsx        # listado de proyectos + panel inline + botón Ver Detalle
 ```
 
 ---
