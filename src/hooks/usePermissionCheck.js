@@ -24,23 +24,45 @@ export const usePermissionCheck = () => {
 
     inFlightUserIdRef.current = userData.id
     setLoadingAccess(true)
+
+    // Si las llamadas a Supabase no responden en 8s liberamos el estado sin
+    // acceso. Evita que loadingAccess quede true indefinidamente cuando la red
+    // falla o Supabase no responde (segunda línea de defensa tras el timeout de
+    // 5s de AuthContext).
+    let timedOut = false
+    const timeoutId = setTimeout(() => {
+      timedOut = true
+      setHasAccess(false)
+      setIsSuperAdmin(false)
+      inFlightUserIdRef.current = null
+      setLoadingAccess(false)
+    }, 8000)
+
     try {
       console.log('Checking user access for:', userData?.email)
       await usersApi.getOrCreateProfile(userData)
+      if (timedOut) return
       const access = await usersApi.checkDashboardAccess(userData.email)
+      if (timedOut) return
       console.log('Dashboard access:', access)
       setHasAccess(access)
       const superAdmin = await usersApi.checkIfSuperAdmin(userData.id)
+      if (timedOut) return
       console.log('Super admin status:', superAdmin)
       setIsSuperAdmin(superAdmin)
       lastCheckedUserIdRef.current = userData.id
     } catch (error) {
       console.error('Error checking user access:', error)
-      setHasAccess(false)
-      setIsSuperAdmin(false)
+      if (!timedOut) {
+        setHasAccess(false)
+        setIsSuperAdmin(false)
+      }
     } finally {
-      inFlightUserIdRef.current = null
-      setLoadingAccess(false)
+      clearTimeout(timeoutId)
+      if (!timedOut) {
+        inFlightUserIdRef.current = null
+        setLoadingAccess(false)
+      }
     }
   }, [])
 

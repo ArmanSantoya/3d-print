@@ -22,6 +22,8 @@ npm run dev       # servidor local (http://localhost:5173/3d-print/)
 npm run build     # build de producción
 npm run deploy    # build + push a GitHub Pages
 npm run lint      # ESLint
+npm run test:e2e  # Playwright E2E (requiere dev server activo o lo arranca solo)
+npm run test:e2e:ui  # Playwright con UI interactiva
 ```
 
 ---
@@ -97,6 +99,20 @@ src/
 - Para operaciones async con `loading`/`error`/`try-catch`: usar `useAsync()` de `src/hooks/useAsync.js`.
 - `initialLoading: true` para operaciones que se ejecutan en el mount (spinner desde el inicio).
 - `handlePermissionChange` en `AdminUsers` usa `saving` como objeto por email — no encaja en `useAsync` y se deja sin cambios.
+
+---
+
+## Tests E2E (Playwright)
+
+- Suites en `e2e/`: `auth.spec.ts`, `reload.spec.ts` (regresión FIX-01), `calculator.spec.ts`
+- Setup en `e2e/setup/auth.setup.ts` — inicia sesión y guarda `e2e/.auth/session.json`
+- Credenciales del usuario de test en `.env.local` como `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` (nunca commitear)
+- `baseURL: 'http://localhost:5173'` — las rutas usan paths completos como `/3d-print/calculator`
+- El dev server arranca solo si no hay uno corriendo (`reuseExistingServer: true`)
+- Nota de selectores: la animación de 300ms entre steps deja el step anterior en el DOM.
+  - Step1 "Siguiente": `page.getByRole('button', { name: /siguiente/i }).first()`
+  - Step2 "Siguiente": `page.locator('button[type=submit]')` (el de Step2 es `type=submit`, el de Step1 es `type=button`)
+  - "Atrás" en Step3: `page.getByRole('button', { name: /atrás/i }).last()`
 
 ---
 

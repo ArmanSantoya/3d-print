@@ -29,3 +29,8 @@ client_secret_*.json
 # Environment variables
 .env.local
 .env
+
+# Playwright
+e2e/.auth/
+playwright-report/
+test-results/

@@ -41,16 +41,15 @@ export function AuthProvider({ children }) {
         // Siempre actualizamos el usuario en estado, sin importar el evento.
         setUser(userData)
 
+        // TOKEN_REFRESHED y USER_UPDATED no son eventos de inicialización.
+        // Salimos ANTES del try/finally para no cancelar el timeout de seguridad
+        // ni llamar setLoading(false) prematuramente. En un hard reload el cliente
+        // Supabase puede disparar TOKEN_REFRESHED antes que INITIAL_SESSION; si
+        // el finally corriera aquí mataría el safety-timeout justo antes de que
+        // checkUserAccess empiece, dejando la UI colgada sin red de rescate.
+        if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return
+
         try {
-          // TOKEN_REFRESHED: la sesion sigue valida. Solo refrescamos el user
-          // y SALIMOS. NO activamos loading ni re-consultamos user_profiles.
-          // Esto fix la pantalla "Cargando..." infinita al volver de otra pestana
-          // y elimina llamadas innecesarias a Supabase.
-          if (event === 'TOKEN_REFRESHED') return
-
-          // USER_UPDATED: cambian metadatos pero no permisos. No re-verificamos.
-          if (event === 'USER_UPDATED') return
-
           // SIGNED_OUT o sin sesion: limpiar estado.
           if (event === 'SIGNED_OUT' || !userData) {
             resetPermissions()
@@ -67,8 +66,8 @@ export function AuthProvider({ children }) {
           console.error('Auth state change error:', error)
           resetPermissions()
         } finally {
-          // GARANTIZADO: setLoading(false) siempre se ejecuta al terminar el
-          // primer evento (tipicamente INITIAL_SESSION).
+          // Solo corre para SIGNED_IN / INITIAL_SESSION / SIGNED_OUT.
+          // El safety-timeout sigue vivo hasta aquí.
           if (mounted) {
             setLoading(false)
             clearTimeout(timeoutId)
