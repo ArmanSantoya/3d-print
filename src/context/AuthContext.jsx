@@ -1,50 +1,21 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase, features } from '../supabase'
-import { usersApi } from '../utils/database'
+import { usePermissionCheck } from '../hooks/usePermissionCheck'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [hasAccess, setHasAccess] = useState(false)
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
-  const [loadingAccess, setLoadingAccess] = useState(false)
 
-  // Marca el ultimo user verificado para evitar verificaciones redundantes
-  // (p. ej. si SIGNED_IN se dispara despues de INITIAL_SESSION para el mismo user).
-  const lastCheckedUserIdRef = useRef(null)
-  // Marca una verificacion en curso para prevenir condiciones de carrera entre
-  // eventos consecutivos del listener de Supabase.
-  const inFlightUserIdRef = useRef(null)
-
-  const checkUserAccess = useCallback(async (userData) => {
-    if (!userData?.id) return
-    if (inFlightUserIdRef.current === userData.id) return
-
-    inFlightUserIdRef.current = userData.id
-    setLoadingAccess(true)
-    try {
-      console.log('Checking user access for:', userData?.email)
-      await usersApi.getOrCreateProfile(userData)
-      const access = await usersApi.checkDashboardAccess(userData.email)
-      console.log('Dashboard access:', access)
-      setHasAccess(access)
-      const superAdmin = await usersApi.checkIfSuperAdmin(userData.id)
-      console.log('Super admin status:', superAdmin)
-      setIsSuperAdmin(superAdmin)
-      lastCheckedUserIdRef.current = userData.id
-    } catch (error) {
-      console.error('Error checking user access:', error)
-      setHasAccess(false)
-      setIsSuperAdmin(false)
-    } finally {
-      // try/finally garantiza que loadingAccess se libere SIEMPRE, incluso si
-      // la verificacion falla. Evita que la UI quede atascada en "Cargando...".
-      inFlightUserIdRef.current = null
-      setLoadingAccess(false)
-    }
-  }, [])
+  const {
+    hasAccess,
+    isSuperAdmin,
+    loadingAccess,
+    check: checkUserAccess,
+    reset: resetPermissions,
+    lastCheckedUserIdRef,
+  } = usePermissionCheck()
 
   useEffect(() => {
     let mounted = true
@@ -54,7 +25,7 @@ export function AuthProvider({ children }) {
     const timeoutId = setTimeout(() => {
       if (mounted) {
         setLoading(false)
-        setLoadingAccess(false)
+        resetPermissions()
       }
     }, 5000)
 
@@ -82,11 +53,7 @@ export function AuthProvider({ children }) {
 
           // SIGNED_OUT o sin sesion: limpiar estado.
           if (event === 'SIGNED_OUT' || !userData) {
-            setHasAccess(false)
-            setIsSuperAdmin(false)
-            setLoadingAccess(false)
-            lastCheckedUserIdRef.current = null
-            inFlightUserIdRef.current = null
+            resetPermissions()
             return
           }
 
@@ -98,8 +65,7 @@ export function AuthProvider({ children }) {
           }
         } catch (error) {
           console.error('Auth state change error:', error)
-          setHasAccess(false)
-          setIsSuperAdmin(false)
+          resetPermissions()
         } finally {
           // GARANTIZADO: setLoading(false) siempre se ejecuta al terminar el
           // primer evento (tipicamente INITIAL_SESSION).
@@ -116,7 +82,7 @@ export function AuthProvider({ children }) {
       clearTimeout(timeoutId)
       subscription?.unsubscribe()
     }
-  }, [checkUserAccess])
+  }, [checkUserAccess, resetPermissions, lastCheckedUserIdRef])
 
   const signInWithGoogle = async () => {
     if (!features.googleAuth) {
@@ -189,11 +155,7 @@ export function AuthProvider({ children }) {
 
   const resetAuthState = () => {
     setUser(null)
-    setHasAccess(false)
-    setIsSuperAdmin(false)
-    setLoadingAccess(false)
-    lastCheckedUserIdRef.current = null
-    inFlightUserIdRef.current = null
+    resetPermissions()
   }
 
   // Logout robusto: SIEMPRE limpia estado local + storage y redirige a /login,
@@ -231,7 +193,6 @@ export function AuthProvider({ children }) {
       signUpWithEmail,
       logout,
       getUserName,
-      checkUserAccess,
       features
     }}>
       {children}

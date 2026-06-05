@@ -1,42 +1,8 @@
 import { useState } from 'react';
 import { MdNavigateBefore, MdNavigateNext, MdRefresh, MdArrowBack } from 'react-icons/md';
 
-export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevStep, config }) {
+export default function Step2TrayInputs({ trayData, updateTray, updateTrayTime, resetTrays, nextStep, prevStep, config }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  const handleChange = (field, value, idx = currentIndex) => {
-    const updated = [...trayData];
-    updated[idx] = { ...updated[idx], [field]: value };
-    setTrayData(updated);
-  };
-
-  const handleTimePartChange = (field, value, idx = currentIndex) => {
-    const updated = [...trayData];
-    updated[idx] = {
-      ...updated[idx],
-      [field]: parseInt(value, 10) || 0
-    };
-
-    const hrs = updated[idx].hours || 0;
-    const min = updated[idx].minutes || 0;
-    updated[idx].time = parseFloat((hrs + min / 60).toFixed(2));
-
-    setTrayData(updated);
-  };
-
-  const handleReset = () => {
-    const reset = trayData.map((_, i) => ({
-      name: `Bandeja ${i + 1}`,
-      weight: '',
-      time: '',
-      material: 'PLA',
-      printer: 'P1S',
-      hours: 0,
-      minutes: 0
-    }));
-    setTrayData(reset);
-    setCurrentIndex(0);
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -46,7 +12,6 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
   const currentTray = trayData[currentIndex];
   const total = trayData.length;
 
-  // Guard: if no data or config, show message
   if (!currentTray || !config || !config.materials || !config.printers) {
     return (
       <div>
@@ -76,7 +41,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
               type="text"
               className="form-input"
               value={currentTray.name || ''}
-              onChange={e => handleChange('name', e.target.value, currentIndex)}
+              onChange={(e) => updateTray(currentIndex, 'name', e.target.value)}
               placeholder="Ej: Bandeja Superior"
             />
           </div>
@@ -90,7 +55,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
               className="form-input"
               step="0.1"
               value={currentTray.weight}
-              onChange={e => handleChange('weight', e.target.value, currentIndex)}
+              onChange={(e) => updateTray(currentIndex, 'weight', e.target.value)}
               placeholder="150"
             />
           </div>
@@ -99,9 +64,9 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
             <select
               className="form-select"
               value={currentTray.material}
-              onChange={e => handleChange('material', e.target.value, currentIndex)}
+              onChange={(e) => updateTray(currentIndex, 'material', e.target.value)}
             >
-              {Object.keys(config.materials || {}).map(mat => (
+              {Object.keys(config.materials || {}).map((mat) => (
                 <option key={mat} value={mat}>{mat}</option>
               ))}
             </select>
@@ -117,7 +82,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
               min="0"
               step="1"
               value={currentTray.hours || ''}
-              onChange={e => handleTimePartChange('hours', e.target.value, currentIndex)}
+              onChange={(e) => updateTrayTime(currentIndex, e.target.value, currentTray.minutes)}
               placeholder="2"
             />
           </div>
@@ -130,7 +95,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
               max="59"
               step="1"
               value={currentTray.minutes || ''}
-              onChange={e => handleTimePartChange('minutes', e.target.value, currentIndex)}
+              onChange={(e) => updateTrayTime(currentIndex, currentTray.hours, e.target.value)}
               placeholder="30"
             />
           </div>
@@ -142,9 +107,9 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
             <select
               className="form-select"
               value={currentTray.printer}
-              onChange={e => handleChange('printer', e.target.value, currentIndex)}
+              onChange={(e) => updateTray(currentIndex, 'printer', e.target.value)}
             >
-              {Object.keys(config.printers || {}).map(printer => (
+              {Object.keys(config.printers || {}).map((printer) => (
                 <option key={printer} value={printer}>{printer}</option>
               ))}
             </select>
@@ -158,7 +123,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => setCurrentIndex(i => i - 1)}
+              onClick={() => setCurrentIndex((i) => i - 1)}
               disabled={currentIndex === 0}
             >
               <MdNavigateBefore size={20} />
@@ -170,7 +135,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => setCurrentIndex(i => i + 1)}
+              onClick={() => setCurrentIndex((i) => i + 1)}
               disabled={currentIndex === total - 1}
             >
               Siguiente
@@ -185,7 +150,7 @@ export default function Step2TrayInputs({ trayData, setTrayData, nextStep, prevS
           <MdArrowBack size={20} />
           Atrás
         </button>
-        <button type="button" className="btn btn-secondary" onClick={handleReset}>
+        <button type="button" className="btn btn-secondary" onClick={resetTrays}>
           <MdRefresh size={20} />
           Reiniciar
         </button>

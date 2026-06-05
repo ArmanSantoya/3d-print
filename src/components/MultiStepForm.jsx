@@ -1,35 +1,22 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Step1TrayCount from './Step1TrayCount';
 import Step2TrayInputs from './Step2TrayInputs';
 import Step3Summary from './Step3Summary';
 import { useAuth } from '../context/AuthContext';
+import { useQuoteForm } from '../hooks/useQuoteForm';
 import '../styles/multistepform.css';
 
-
 export default function MultiStepForm({ config }) {
-  const navigate = useNavigate();
   const { user, logout, getUserName } = useAuth();
-  const [step, setStep] = useState(1);
-  const [trayCount, setTrayCount] = useState(0);
-  const [trayData, setTrayData] = useState([]);
-  const [projectName, setProjectName] = useState('');
-  const [exiting, setExiting] = useState(false);
-
-  const goToStep = (targetStep) => {
-    setExiting(true);
-    setTimeout(() => {
-      setStep(targetStep);
-      setExiting(false);
-    }, 300);
-  };
-
-  const resetAndCreateNew = () => {
-    setTrayCount(0);
-    setTrayData([]);
-    setProjectName('');
-    goToStep(1);
-  };
+  const navigate = useNavigate();
+  const {
+    step, exiting,
+    trayCount, trayData, projectName,
+    goToStep,
+    setTrayCount, setProjectName,
+    updateTray, updateTrayTime, resetTrays,
+    resetAndCreateNew,
+  } = useQuoteForm();
 
   return (
     <div className="multistep-form">
@@ -39,7 +26,6 @@ export default function MultiStepForm({ config }) {
             <Step1TrayCount
               trayCount={trayCount}
               setTrayCount={setTrayCount}
-              setTrayData={setTrayData}
               projectName={projectName}
               setProjectName={setProjectName}
               nextStep={() => goToStep(2)}
@@ -49,7 +35,9 @@ export default function MultiStepForm({ config }) {
           <div className={`step-container ${step === 2 ? (exiting ? 'exiting' : 'active') : ''}`}>
             <Step2TrayInputs
               trayData={trayData}
-              setTrayData={setTrayData}
+              updateTray={updateTray}
+              updateTrayTime={updateTrayTime}
+              resetTrays={resetTrays}
               nextStep={() => goToStep(3)}
               prevStep={() => goToStep(1)}
               config={config}

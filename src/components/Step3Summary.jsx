@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { MdCheckCircle, MdArrowBack, MdAddCircle, MdSave, MdPictureAsPdf } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import PdfGenerator from './PdfGenerator';
-import { calculateTrayDetails, roundTo50 } from '../utils/costCalculator';
+import { calculateQuote } from '../utils/pricingEngine';
 import { projectsApi } from '../utils/database';
+import { useAsync } from '../hooks/useAsync';
 
 export default function Step3Summary({ trayData = [], config = {}, projectName = '', prevStep, resetAndCreateNew }) {
   const { user, hasAccess } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const { loading: isSaving, execute: runSave } = useAsync();
 
   const handleSaveProject = async () => {
     if (!user?.id) {
@@ -21,18 +22,10 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
       return;
     }
 
-    setIsSaving(true);
-    setSaveMessage('');
-
-    try {
+    const result = await runSave(async () => {
       const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
       const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
-      const totalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray, config).subtotal, 0);
-
-      const marginPercent = Number(config.margin) || 0;
-      const subtotalWithMargin = totalGeneral * (1 + marginPercent / 100);
-      const retentionRate = Number(config.retentionRate) || 0.1525;
-      const brutoAmount = subtotalWithMargin / (1 - retentionRate);
+      const quote = calculateQuote(trayData, config);
 
       const projectData = {
         name: projectName,
@@ -40,29 +33,25 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
         weight_total_g: totalWeight,
         time_total_hours: totalTime,
         material_used_g: totalWeight,
-        total_cost: Math.round(brutoAmount)
+        liquid_cost: quote.liquidAmount,
+        total_cost: quote.brutoAmount
       };
 
-      const details = trayData.map((tray, i) => {
-        const { subtotal } = calculateTrayDetails(tray, config);
-        return {
-          tray_name: tray.name || `Bandeja ${i + 1}`,
-          weight_g: Number(tray.weight) || 0,
-          time_hours: Number(tray.time) || 0,
-          material: tray.material,
-          printer: tray.printer,
-          cost: Math.round(subtotal)
-        };
-      });
+      const details = quote.trayRows.map((row, i) => ({
+        tray_name: row.name,
+        weight_g: row.weight,
+        time_hours: Number(trayData[i].time) || 0,
+        material: row.material,
+        printer: row.printer,
+        electricity_cost: row.electricityCost,
+        cost: row.subtotal
+      }));
 
       await projectsApi.saveWithDetails(projectData, details, user.id);
-      setSaveMessage('Proyecto guardado exitosamente');
-    } catch (error) {
-      console.error('Error saving project:', error);
-      setSaveMessage('Error al guardar el proyecto');
-    } finally {
-      setIsSaving(false);
-    }
+      return 'ok';
+    });
+
+    setSaveMessage(result ? 'Proyecto guardado exitosamente' : 'Error al guardar el proyecto');
   };
 
   const formatTotalTime = (hoursDecimal) => {
@@ -82,16 +71,7 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
 
   const totalWeight = trayData.reduce((sum, tray) => sum + (Number(tray.weight) || 0), 0);
   const totalTime = trayData.reduce((sum, tray) => sum + (Number(tray.time) || 0), 0);
-  const totalGeneral = trayData.reduce((sum, tray) => sum + calculateTrayDetails(tray, config).subtotal, 0);
-
-  const marginPercent = Number(config.margin) || 0;
-  const subtotalWithMargin = totalGeneral * (1 + marginPercent / 100);
-
-  const retentionRate = Number(config.retentionRate) || 0.1525;
-  const brutoAmount = subtotalWithMargin / (1 - retentionRate);
-  const retentionAmount = brutoAmount - subtotalWithMargin;
-
-  const totalRounded = roundTo50(brutoAmount);
+  const { trayRows, subtotalBase, liquidAmount, marginPercent, retentionRate, retentionAmount, totalRounded } = calculateQuote(trayData, config);
 
   return (
     <div>
@@ -131,19 +111,16 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
             </tr>
           </thead>
           <tbody>
-            {trayData.map((tray, i) => {
-              const { materialCost, electricityCost, machineCost, subtotal } = calculateTrayDetails(tray, config);
-              return (
-                <tr key={i}>
-                  <td>{tray.name || `Bandeja ${i + 1}`}</td>
-                  <td>{tray.weight}g</td>
-                  <td>{tray.time}h</td>
-                  <td>{tray.material}</td>
-                  <td>{tray.printer}</td>
-                  <td style={{ fontWeight: '600', color: '#f57c00' }}>${subtotal.toLocaleString('es-CL')}</td>
-                </tr>
-              );
-            })}
+            {trayRows.map((row, i) => (
+              <tr key={i}>
+                <td>{row.name}</td>
+                <td>{row.weight}g</td>
+                <td>{trayData[i].time}h</td>
+                <td>{row.material}</td>
+                <td>{row.printer}</td>
+                <td style={{ fontWeight: '600', color: '#f57c00' }}>${row.subtotal.toLocaleString('es-CL')}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -160,11 +137,11 @@ export default function Step3Summary({ trayData = [], config = {}, projectName =
         </div>
         <div className="summary-item">
           <div className="summary-item-label">Subtotal Base</div>
-          <div className="summary-item-value">${totalGeneral.toLocaleString('es-CL')}</div>
+          <div className="summary-item-value">${subtotalBase.toLocaleString('es-CL')}</div>
         </div>
         <div className="summary-item">
           <div className="summary-item-label">Con Margen ({marginPercent}%)</div>
-          <div className="summary-item-value">${Math.round(subtotalWithMargin).toLocaleString('es-CL')}</div>
+          <div className="summary-item-value">${liquidAmount.toLocaleString('es-CL')}</div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-export default function Settings({ config, setConfig }) {
+export default function Settings({ config, setConfig, saveConfig }) {
   const navigate = useNavigate();
 
   const handleMaterialChange = (mat, value) => {
@@ -41,8 +41,8 @@ export default function Settings({ config, setConfig }) {
   };
 
   const handleSave = () => {
-    localStorage.setItem('config', JSON.stringify(config));
-    alert('Configuración guardada en localStorage');
+    saveConfig();
+    alert('Configuración guardada');
   };
 
   return (

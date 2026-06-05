@@ -3,7 +3,7 @@ import { MdPictureAsPdf, MdClose } from 'react-icons/md';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logoPath from '/logo.jpg';
-import { calculateTrayDetails, roundTo50 } from '../utils/costCalculator';
+import { calculateQuote } from '../utils/pricingEngine';
 
 export default function PdfGenerator({ trayData, config, projectName = '' }) {
   const [showOptions, setShowOptions] = useState(false);
@@ -11,41 +11,10 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
   const [includeRetention, setIncludeRetention] = useState(true);
 
   const buildQuotationHtmlFragment = (includeDesign, applyRetention) => {
-    const marginPercent = Number(config.margin) || 0;
-    const retentionRate = Number(config.retentionRate) || 0.1525;
-    const designFeeValue = includeDesign ? Number(config.designFee ?? 5000) : 0;
+    const { trayRows, liquidAmount, designFeeValue, retentionAmount, retentionRate, totalRounded } =
+      calculateQuote(trayData, config, { includeDesign, applyRetention });
 
-    // Precio por bandeja = subtotal de costos con margen aplicado
-    // El cliente no ve el desglose de costos ni el % de margen
-    const rows = trayData.map((tray, i) => {
-      const { subtotal } = calculateTrayDetails(tray, config);
-      const precioConMargen = Math.round(subtotal * (1 + marginPercent / 100));
-      return {
-        name: tray.name || `Bandeja ${i + 1}`,
-        weight: Number(tray.weight) || 0,
-        material: tray.material || '',
-        printer: tray.printer || '',
-        price: precioConMargen,
-      };
-    });
-
-    const subtotalImpresion = rows.reduce((s, r) => s + r.price, 0);
-    const baseConDiseño = subtotalImpresion + designFeeValue;
-    
-    let totalToCharge, retentionAmount;
-    
-    if (applyRetention) {
-      // Cálculo para Boleta de Honorarios: Bruto = Líquido / (1 - retentionRate)
-      const brutoAmount = baseConDiseño / (1 - retentionRate);
-      retentionAmount = Math.round(brutoAmount - baseConDiseño);
-      totalToCharge = roundTo50(brutoAmount);
-    } else {
-      // Sin retención: mostrar el monto líquido
-      totalToCharge = roundTo50(baseConDiseño);
-      retentionAmount = 0;
-    }
-
-    const rowsHtml = rows
+    const rowsHtml = trayRows
       .map(
         (r) => `
       <tr>
@@ -53,7 +22,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
         <td style="border:1px solid #ccc;padding:8px;text-align:right;">${r.weight} g</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.material}</td>
         <td style="border:1px solid #ccc;padding:8px;text-align:center;">${r.printer}</td>
-        <td style="border:1px solid #ccc;padding:8px;text-align:right;">$ ${r.price.toLocaleString('es-CL')}</td>
+        <td style="border:1px solid #ccc;padding:8px;text-align:right;">$ ${r.priceWithMargin.toLocaleString('es-CL')}</td>
       </tr>
     `
       )
@@ -64,7 +33,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
       : '';
 
     const retentionRow = applyRetention
-      ? `<p style="margin:4px 0;"><strong>Retención (15,25%):</strong> $ ${retentionAmount.toLocaleString('es-CL')} CLP</p>`
+      ? `<p style="margin:4px 0;"><strong>Retención (${(retentionRate * 100).toFixed(2)}%):</strong> $ ${retentionAmount.toLocaleString('es-CL')} CLP</p>`
       : '';
 
     const totalLabel = applyRetention ? 'Monto Bruto (Boleta de Honorarios)' : 'Monto Total';
@@ -95,14 +64,14 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
           </table>
 
           <div style="margin-top:12px;font-size:1rem;">
-            <p style="margin:4px 0;"><strong>Subtotal (Líquido):</strong> $ ${baseConDiseño.toLocaleString('es-CL')} CLP</p>
+            <p style="margin:4px 0;"><strong>Subtotal (Líquido):</strong> $ ${liquidAmount.toLocaleString('es-CL')} CLP</p>
             ${designRow}
             ${retentionRow}
-            <h2 style="margin-top:12px;">${totalLabel}: $ ${totalToCharge.toLocaleString('es-CL')} CLP</h2>
+            <h2 style="margin-top:12px;">${totalLabel}: $ ${totalRounded.toLocaleString('es-CL')} CLP</h2>
           </div>
         </div>
       `,
-      totalToCharge,
+      totalToCharge: totalRounded,
     };
   };
 

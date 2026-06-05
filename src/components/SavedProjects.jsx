@@ -1,30 +1,23 @@
 import { useState, useEffect } from 'react';
 import { projectsApi } from '../utils/database';
+import { useConfig } from '../hooks/useConfig';
+import { useAsync } from '../hooks/useAsync';
 import '../styles/savedProjects.css';
 
 export default function SavedProjects() {
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [config] = useConfig();
+  const { loading, error, execute } = useAsync({ initialLoading: true });
 
   useEffect(() => {
     loadProjects();
   }, []);
 
-  const loadProjects = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await projectsApi.getAll();
-      setProjects(data);
-    } catch (err) {
-      console.error('Error loading projects:', err);
-      setError('Error al cargar los proyectos');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadProjects = () => execute(async () => {
+    const data = await projectsApi.getAll();
+    setProjects(data);
+  });
 
   const handleProjectClick = async (projectId) => {
     try {
@@ -32,7 +25,6 @@ export default function SavedProjects() {
       setSelectedProject(project);
     } catch (err) {
       console.error('Error loading project details:', err);
-      setError('Error al cargar los detalles del proyecto');
     }
   };
 
@@ -76,6 +68,24 @@ export default function SavedProjects() {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-CL');
+  };
+
+  const getTotalElectricityCost = (details) => {
+    if (!details?.length) return 0;
+    return details.reduce((sum, d) => {
+      if (d.electricity_cost != null) return sum + d.electricity_cost;
+      // fallback para proyectos guardados antes de esta feature
+      const kw = config.printers?.[d.printer]?.consumptionKw || 0;
+      const rate = config.electricity?.pricePerKwh || 0;
+      return sum + Math.round((d.time_hours || 0) * kw * rate);
+    }, 0);
+  };
+
+  const getLiquidCost = (project) => {
+    if (project.liquid_cost != null) return project.liquid_cost;
+    // fallback: revertir la retención del total guardado
+    const retentionRate = config.retentionRate || 0.1525;
+    return Math.round(project.total_cost * (1 - retentionRate));
   };
 
   const formatTimeTotal = (hours) => {
@@ -162,7 +172,15 @@ export default function SavedProjects() {
                   <span className="project-detail-value">{formatTimeTotal(selectedProject.time_total_hours)}</span>
                 </div>
                 <div className="project-detail-item">
-                  <span className="project-detail-label">Costo Total:</span>
+                  <span className="project-detail-label">Electricidad:</span>
+                  <span className="project-detail-value">${getTotalElectricityCost(selectedProject.details).toLocaleString('es-CL')} CLP</span>
+                </div>
+                <div className="project-detail-item">
+                  <span className="project-detail-label">Costo Líquido:</span>
+                  <span className="project-detail-value">${getLiquidCost(selectedProject).toLocaleString('es-CL')} CLP</span>
+                </div>
+                <div className="project-detail-item">
+                  <span className="project-detail-label">Costo Total (c/ retención):</span>
                   <span className="project-detail-value">${selectedProject.total_cost.toLocaleString('es-CL')} CLP</span>
                 </div>
                 <div className="project-detail-item">

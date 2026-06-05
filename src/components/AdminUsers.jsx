@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react'
 import { MdShield, MdPerson, MdCheckCircle, MdCancel } from 'react-icons/md'
 import { useAuth } from '../context/AuthContext'
 import { usersApi } from '../utils/database'
+import { useAsync } from '../hooks/useAsync'
 import '../styles/admin.css'
 
 export default function AdminUsers() {
   const { user, isSuperAdmin } = useAuth()
   const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState({})
   const [message, setMessage] = useState('')
+  const { loading, error, execute: runLoadUsers } = useAsync({ initialLoading: true })
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -17,18 +18,10 @@ export default function AdminUsers() {
     }
   }, [isSuperAdmin])
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true)
-      const data = await usersApi.getAllUsers()
-      setUsers(data)
-    } catch (error) {
-      console.error('Error loading users:', error)
-      setMessage('Error al cargar usuarios')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const loadUsers = () => runLoadUsers(async () => {
+    const data = await usersApi.getAllUsers()
+    setUsers(data)
+  })
 
   const handlePermissionChange = async (userEmail, hasDashboardAccess, isSuperAdmin) => {
     setSaving(prev => ({ ...prev, [userEmail]: true }))
@@ -71,12 +64,12 @@ export default function AdminUsers() {
         <p>Gestiona permisos y acceso de usuarios</p>
       </div>
 
-      {message && (
+      {(error || message) && (
         <div className="admin-message" style={{
-          background: message.includes('❌') ? '#ffebee' : '#e8f5e9',
-          color: message.includes('❌') ? '#c62828' : '#2e7d32'
+          background: (error || message).includes('❌') || error ? '#ffebee' : '#e8f5e9',
+          color: (error || message).includes('❌') || error ? '#c62828' : '#2e7d32'
         }}>
-          {message}
+          {error ? `❌ ${error}` : message}
         </div>
       )}
 

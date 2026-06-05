@@ -340,7 +340,13 @@ export const usersApi = {
     return data
   },
 
-  // Add user to authorized list
+  /**
+   * @deprecated SEC-01 (2026-06-05)
+   * authorized_users tiene RLS habilitado sin policy de INSERT.
+   * Esta función falla en producción desde el cliente (anon key).
+   * Para dar acceso a nuevos usuarios usar updateUserPermissions()
+   * que opera sobre user_profiles vía RPC con permisos correctos.
+   */
   async addAuthorizedUser(email, fullName = null) {
     const { data, error } = await supabase
       .from('authorized_users')
@@ -395,7 +401,13 @@ export const usersApi = {
     }
   },
 
-  // Remove user from authorized list
+  /**
+   * @deprecated SEC-01 (2026-06-05)
+   * authorized_users tiene RLS habilitado sin policy de DELETE.
+   * Esta función falla en producción desde el cliente (anon key).
+   * La gestión de usuarios se hace íntegramente desde AdminUsers.jsx
+   * usando updateUserPermissions() sobre user_profiles.
+   */
   async removeAuthorizedUser(email) {
     const { error } = await supabase
       .from('authorized_users')

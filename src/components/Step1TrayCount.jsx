@@ -1,17 +1,6 @@
 import { MdCreateNewFolder } from 'react-icons/md';
 
-export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, projectName, setProjectName, nextStep }) {
-
-  const handleChange = (e) => {
-    const count = parseInt(e.target.value, 10);
-    setTrayCount(count);
-    setTrayData(Array.from({ length: count }, (_, i) => ({ name: `Bandeja ${i + 1}`, weight: '', time: '', material: 'PLA', printer: 'P1S', hours: 0, minutes: 0 })));
-  };
-
-  const handleProjectNameChange = (e) => {
-    setProjectName(e.target.value);
-  };
-
+export default function Step1TrayCount({ trayCount, setTrayCount, projectName, setProjectName, nextStep }) {
   return (
     <div>
       <h2 className="step-title">
@@ -26,7 +15,7 @@ export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, p
             type="text"
             className="form-input"
             value={projectName}
-            onChange={handleProjectNameChange}
+            onChange={(e) => setProjectName(e.target.value)}
             placeholder="Ej: Pieza cliente ABC"
           />
         </div>
@@ -40,17 +29,17 @@ export default function Step1TrayCount({ trayCount, setTrayCount, setTrayData, p
             className="form-input"
             min="1"
             value={trayCount}
-            onChange={handleChange}
+            onChange={(e) => setTrayCount(e.target.value)}
             placeholder="2"
           />
         </div>
       </div>
 
       <div className="button-group">
-        <button 
-          type="button" 
-          className="btn btn-primary" 
-          onClick={nextStep} 
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={nextStep}
           disabled={trayCount < 1}
         >
           Siguiente
