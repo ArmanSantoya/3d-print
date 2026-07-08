@@ -9,10 +9,15 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
   const [showOptions, setShowOptions] = useState(false);
   const [includesDesign, setIncludesDesign] = useState(false);
   const [includeRetention, setIncludeRetention] = useState(true);
+  const [serviceAmount, setServiceAmount] = useState('');
+  const [serviceDesc, setServiceDesc] = useState('');
+
+  const escapeHtml = (text) =>
+    text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const buildQuotationHtmlFragment = (includeDesign, applyRetention) => {
-    const { trayRows, liquidAmount, designFeeValue, retentionAmount, retentionRate, totalRounded } =
-      calculateQuote(trayData, config, { includeDesign, applyRetention });
+    const { trayRows, liquidAmount, designFeeValue, additionalServiceValue, retentionAmount, retentionRate, totalRounded } =
+      calculateQuote(trayData, config, { includeDesign, applyRetention, additionalServiceAmount: serviceAmount });
 
     const rowsHtml = trayRows
       .map(
@@ -30,6 +35,10 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
 
     const designRow = includeDesign
       ? `<p style="margin:4px 0;"><strong>Recargo por diseño:</strong> $ ${designFeeValue.toLocaleString('es-CL')} CLP</p>`
+      : '';
+
+    const serviceRow = additionalServiceValue > 0
+      ? `<p style="margin:4px 0;"><strong>${escapeHtml(serviceDesc.trim() || 'Servicio adicional')}:</strong> $ ${additionalServiceValue.toLocaleString('es-CL')} CLP</p>`
       : '';
 
     const retentionRow = applyRetention
@@ -66,6 +75,7 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
           <div style="margin-top:12px;font-size:1rem;">
             <p style="margin:4px 0;"><strong>Subtotal (Líquido):</strong> $ ${liquidAmount.toLocaleString('es-CL')} CLP</p>
             ${designRow}
+            ${serviceRow}
             ${retentionRow}
             <h2 style="margin-top:12px;">${totalLabel}: $ ${totalRounded.toLocaleString('es-CL')} CLP</h2>
           </div>
@@ -139,6 +149,23 @@ export default function PdfGenerator({ trayData, config, projectName = '' }) {
             />
             <span>Aplicar retención 15,25% (Boleta de Honorarios)</span>
           </label>
+        </div>
+        <div className="pdf-panel-option pdf-panel-service">
+          <label htmlFor="pdf-service-amount">Servicio adicional (CLP):</label>
+          <input
+            id="pdf-service-amount"
+            type="number"
+            min="0"
+            placeholder="0"
+            value={serviceAmount}
+            onChange={(e) => setServiceAmount(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Descripción (opcional, ej. Pintado a mano)"
+            value={serviceDesc}
+            onChange={(e) => setServiceDesc(e.target.value)}
+          />
         </div>
         <div className="pdf-panel-actions">
           <button className="btn btn-secondary" onClick={() => setShowOptions(false)}>

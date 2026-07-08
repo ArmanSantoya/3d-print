@@ -7,12 +7,14 @@ import { calculateTrayDetails, roundTo50 } from './costCalculator';
  *
  * @param {Array}  trayData
  * @param {Object} config
- * @param {{ includeDesign?: boolean, applyRetention?: boolean }} options
+ * @param {{ includeDesign?: boolean, applyRetention?: boolean, additionalServiceAmount?: number }} options
  */
-export const calculateQuote = (trayData, config, { includeDesign = false, applyRetention = true } = {}) => {
+export const calculateQuote = (trayData, config, { includeDesign = false, applyRetention = true, additionalServiceAmount = 0 } = {}) => {
   const marginPercent = Number(config.margin) || 0;
   const retentionRate = Number(config.retentionRate) || 0.1525;
   const designFeeValue = includeDesign ? Number(config.designFee ?? 5000) : 0;
+  // Servicio adicional: monto libre por cotización, sin margen (igual que el diseño)
+  const additionalServiceValue = Math.round(Number(additionalServiceAmount) || 0);
 
   const trayRows = trayData.map((tray, i) => {
     const breakdown = calculateTrayDetails(tray, config);
@@ -29,7 +31,7 @@ export const calculateQuote = (trayData, config, { includeDesign = false, applyR
   const subtotalBase = trayRows.reduce((s, r) => s + r.subtotal, 0);
   // Suma de precios por bandeja con margen aplicado individualmente.
   // Usar este valor (no subtotalBase * factor) garantiza que las filas del PDF sumen al subtotal.
-  const liquidAmount = trayRows.reduce((s, r) => s + r.priceWithMargin, 0) + designFeeValue;
+  const liquidAmount = trayRows.reduce((s, r) => s + r.priceWithMargin, 0) + designFeeValue + additionalServiceValue;
 
   const brutoAmount = applyRetention ? liquidAmount / (1 - retentionRate) : liquidAmount;
   const retentionAmount = applyRetention ? Math.round(brutoAmount - liquidAmount) : 0;
@@ -42,6 +44,7 @@ export const calculateQuote = (trayData, config, { includeDesign = false, applyR
     subtotalBase: Math.round(subtotalBase),
     liquidAmount,
     designFeeValue,
+    additionalServiceValue,
     retentionAmount,
     brutoAmount: Math.round(brutoAmount),
     totalRounded,

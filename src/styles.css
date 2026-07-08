@@ -531,6 +531,24 @@ button {
   margin-bottom: 12px;
 }
 
+.pdf-panel-service {
+  flex-wrap: wrap;
+}
+
+.pdf-panel-service label {
+  flex-basis: 100%;
+  font-weight: 600;
+}
+
+.pdf-panel-service input {
+  flex: 1;
+  min-width: 140px;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
 .pdf-panel-actions {
   display: flex;
   justify-content: center;
