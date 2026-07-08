@@ -42,6 +42,11 @@ export default function ProjectDetail() {
     return map[status] || status
   }
 
+  const getMaterialCost = (d) => {
+    const materialPricePerKg = config.materials?.[d.material] || 0
+    return Math.round((d.weight_g || 0) * (materialPricePerKg / 1000))
+  }
+
   const getTotalElectricity = (details) => {
     if (!details?.length) return 0
     return details.reduce((sum, d) => {
@@ -102,9 +107,14 @@ export default function ProjectDetail() {
   const liquidCost = getLiquidCost(project)
   const retentionAmount = project.total_cost - liquidCost
   const totalElectricity = getTotalElectricity(details)
+  const totalFilament = details.reduce((sum, d) => sum + getMaterialCost(d), 0)
   const costoBase = details.reduce((sum, d) => sum + (d.cost || 0), 0)
-  const ganancia = liquidCost - costoBase
-  const gananciaPercent = costoBase > 0 ? Math.round((ganancia / costoBase) * 100) : 0
+  const margen = liquidCost - costoBase
+  const margenPercent = costoBase > 0 ? Math.round((margen / costoBase) * 100) : 0
+  const maintenancePercent = config.maintenancePercent ?? 20
+  const mantenimiento = Math.round(costoBase * (maintenancePercent / 100))
+  // Flujo de caja neto: lo que queda tras pagar electricidad, material y apartar el mantenimiento
+  const gananciaReal = liquidCost - mantenimiento - totalElectricity - totalFilament
 
   // trayData compatible con PdfGenerator
   const trayDataForPdf = details.map(d => ({
@@ -160,7 +170,7 @@ export default function ProjectDetail() {
           <tbody>
             {details.map((d, i) => {
               const materialPricePerKg = config.materials?.[d.material] || 0
-              const materialCost = Math.round(d.weight_g * (materialPricePerKg / 1000))
+              const materialCost = getMaterialCost(d)
               const machineCostPerHour = Number(config.printers?.[d.printer]?.machineCostPerHour) || Number(config.machineCostPerHour) || 0
               const machineCost = Math.round(d.time_hours * machineCostPerHour)
               return (
@@ -209,16 +219,28 @@ export default function ProjectDetail() {
           <div className="project-detail-total-value">${totalElectricity.toLocaleString('es-CL')}</div>
         </div>
         <div className="project-detail-total-card">
+          <div className="project-detail-total-label">Costo Filamento</div>
+          <div className="project-detail-total-value">${totalFilament.toLocaleString('es-CL')}</div>
+        </div>
+        <div className="project-detail-total-card">
           <div className="project-detail-total-label">Costo Base</div>
           <div className="project-detail-total-value">${costoBase.toLocaleString('es-CL')}</div>
         </div>
-        <div className="project-detail-total-card project-detail-total-card--profit">
-          <div className="project-detail-total-label">Ganancia ({gananciaPercent}%)</div>
-          <div className="project-detail-total-value">${ganancia.toLocaleString('es-CL')}</div>
+        <div className="project-detail-total-card">
+          <div className="project-detail-total-label">Mantenimiento ({maintenancePercent}%)</div>
+          <div className="project-detail-total-value">${mantenimiento.toLocaleString('es-CL')}</div>
         </div>
         <div className="project-detail-total-card">
-          <div className="project-detail-total-label">Costo Líquido</div>
+          <div className="project-detail-total-label">Margen ({margenPercent}%)</div>
+          <div className="project-detail-total-value">${margen.toLocaleString('es-CL')}</div>
+        </div>
+        <div className="project-detail-total-card">
+          <div className="project-detail-total-label">Costo del Proyecto</div>
           <div className="project-detail-total-value">${liquidCost.toLocaleString('es-CL')}</div>
+        </div>
+        <div className="project-detail-total-card project-detail-total-card--profit">
+          <div className="project-detail-total-label">Ganancia Real</div>
+          <div className="project-detail-total-value">${gananciaReal.toLocaleString('es-CL')}</div>
         </div>
       </div>
 

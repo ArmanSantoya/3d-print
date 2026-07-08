@@ -123,6 +123,13 @@ export default function Settings({ config, setConfig, saveConfig }) {
           value={config.retentionRate ?? 0.1525}
           onChange={e => handleSimpleChange('retentionRate', e.target.value)}
         />
+
+        <label>Mantenimiento de impresoras (% del costo base):</label>
+        <input
+          type="number"
+          value={config.maintenancePercent ?? 20}
+          onChange={e => handleSimpleChange('maintenancePercent', e.target.value)}
+        />
       </div>
 
       <div className="settings-buttons">

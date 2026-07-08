@@ -34,6 +34,11 @@ export const migrateConfig = (config) => {
     config = { ...rest, retentionRate: 0.1525 };
   }
 
+  // reserva de mantenimiento (FEAT-03)
+  if (config.maintenancePercent == null) {
+    config = { ...config, maintenancePercent: defaultConfig.maintenancePercent };
+  }
+
   return config;
 };
 

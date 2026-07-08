@@ -3,7 +3,7 @@ export const defaultConfig = {
     PLA: 16000,
     PETG: 20000,
     ABS: 22000,
-    TPU: 26500
+    TPU: 40000
   },
 
   printers: {
@@ -18,6 +18,7 @@ export const defaultConfig = {
 
   margin: 30,                    // % de ganancia sobre subtotal
   retentionRate: 0.1525,         // 15.25% Retención para Boletas de Honorarios
-  designFee: 5000                // CLP fijo por diseño
+  designFee: 5000,               // CLP fijo por diseño
+  maintenancePercent: 20         // % del costo base reservado para mantenimiento de impresoras
 };
 export default defaultConfig;
