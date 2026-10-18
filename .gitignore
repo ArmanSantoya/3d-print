@@ -30,6 +30,12 @@ client_secret_*.json
 .env.local
 .env
 
+# Supabase CLI token (local use only, never commit)
+.supabase-token
+
+# Supabase CLI local state (project metadata, may include connection info)
+supabase/.temp/
+
 # Playwright
 e2e/.auth/
 playwright-report/

@@ -4,6 +4,7 @@ import { MdArrowBack, MdCheckCircle, MdDelete } from 'react-icons/md'
 import { projectsApi } from '../utils/database'
 import { useAsync } from '../hooks/useAsync'
 import { useConfig } from '../hooks/useConfig'
+import { useAuth } from '../context/AuthContext'
 import PdfGenerator from './PdfGenerator'
 import '../styles/savedProjects.css'
 import '../styles/projectDetail.css'
@@ -12,15 +13,23 @@ export default function ProjectDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [config] = useConfig()
+  const { user, isSuperAdmin } = useAuth()
   const [project, setProject] = useState(null)
-  const { loading, error, execute } = useAsync({ initialLoading: true })
+  const { loading, execute } = useAsync({ initialLoading: true })
 
   useEffect(() => {
+    if (!user?.id) return
     execute(async () => {
-      const data = await projectsApi.getWithDetails(id)
-      setProject(data)
+      try {
+        const data = await projectsApi.getWithDetails(id, { userId: user.id, isSuperAdmin })
+        setProject(data)
+      } catch (err) {
+        // Proyecto inexistente o ajeno: no distinguimos para no revelar su existencia
+        navigate('/saved-projects', { replace: true })
+        throw err
+      }
     })
-  }, [id])
+  }, [id, user?.id, isSuperAdmin])
 
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('es-CL')
 
@@ -91,13 +100,10 @@ export default function ProjectDetail() {
     )
   }
 
-  if (error || !project) {
+  if (!project) {
     return (
       <div className="project-detail-page">
-        <button className="project-detail-back" onClick={() => navigate('/saved-projects')}>
-          <MdArrowBack size={16} /> Volver a proyectos
-        </button>
-        <p className="project-detail-error">❌ {error || 'Proyecto no encontrado'}</p>
+        <p className="project-detail-loading">Cargando proyecto...</p>
       </div>
     )
   }

@@ -87,13 +87,13 @@ export const projectsApi = {
     return data
   },
 
-  // Get project with details
-  async getWithDetails(id) {
-    const { data: project, error: projectError } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', id)
-      .single()
+  // Get project with details (scoped to the owner unless isSuperAdmin)
+  async getWithDetails(id, { userId, isSuperAdmin = false } = {}) {
+    let query = supabase.from('projects').select('*').eq('id', id)
+    if (!isSuperAdmin && userId) {
+      query = query.eq('user_id', userId)
+    }
+    const { data: project, error: projectError } = await query.single()
 
     if (projectError) throw projectError
 

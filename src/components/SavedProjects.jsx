@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { projectsApi } from '../utils/database';
 import { useConfig } from '../hooks/useConfig';
 import { useAsync } from '../hooks/useAsync';
+import { useAuth } from '../context/AuthContext';
 import '../styles/savedProjects.css';
 
 export default function SavedProjects() {
@@ -10,20 +11,25 @@ export default function SavedProjects() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [config] = useConfig();
   const navigate = useNavigate();
+  const { user, isSuperAdmin } = useAuth();
   const { loading, error, execute } = useAsync({ initialLoading: true });
 
   useEffect(() => {
-    loadProjects();
-  }, []);
+    if (user?.id) {
+      loadProjects();
+    }
+  }, [user, isSuperAdmin]);
 
   const loadProjects = () => execute(async () => {
-    const data = await projectsApi.getAll();
+    const data = isSuperAdmin
+      ? await projectsApi.getAll()
+      : await projectsApi.getUserProjects(user.id);
     setProjects(data);
   });
 
   const handleProjectClick = async (projectId) => {
     try {
-      const project = await projectsApi.getWithDetails(projectId);
+      const project = await projectsApi.getWithDetails(projectId, { userId: user.id, isSuperAdmin });
       setSelectedProject(project);
     } catch (err) {
       console.error('Error loading project details:', err);
